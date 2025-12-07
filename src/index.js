@@ -1,0 +1,61 @@
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import dht22Routes from "./routes/dht22Route.js";
+import logRequest from "./middleware/logs.js";
+import cors from "cors";
+import "./mqtt/mqttClient.js";
+
+const app = express();
+dotenv.config();
+
+// Middleware
+app.use(logRequest);
+app.use(express.json());
+
+app.use(cors());
+
+// Config
+const PORT = process.env.PORT || 5000;
+const MONGOURL = process.env.MONGO_URL;
+
+// Routes DHT22
+app.use("/api/dht22", dht22Routes);
+
+// Route default untuk testing
+app.get("/api", (req, res) => {
+  res.json({
+    message: "Smart Room Monitoring API is running 🚀",
+    database: "MongoDB Connected",
+    endpoints: {
+      dht22: {
+        getAll: "GET /api/dht22",
+        getByLocation: "GET /api/dht22/:location",
+        getLatestDht: "GET /api/dht22/:location/latest",
+        create: "POST /api/dht22",
+      },
+    },
+  });
+});
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+
+mongoose
+  .connect(MONGOURL)
+  .then(() => {
+    console.log("Database connected successfully.");
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Database connection failed:", error.message);
+    process.exit(1);
+  });

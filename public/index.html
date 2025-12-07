@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Microcontroller Lab Monitoring - POLINES</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Header -->
+      <header class="dashboard-header">
+        <div class="header-content">
+          <div class="logo-section">
+            <div class="logo-icon">
+              <img
+                src="images/logo-polines.png"
+                alt="Logo Polines"
+                class="logo-polines"
+              />
+              <!-- <i class="fas fa-microchip"></i> -->
+            </div>
+            <div class="logo-text">
+              <h1>POLITEKNIK NEGERI SEMARANG</h1>
+              <p>Microcontroller Laboratory Monitoring</p>
+            </div>
+          </div>
+          <div class="header-info">
+            <div class="current-time">
+              <i class="far fa-clock"></i>
+              <span id="current-date">Loading...</span>
+            </div>
+            <div class="last-update">
+              <i class="fas fa-sync-alt"></i> Last update:
+              <span id="update-time">--:--:--</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="dashboard-main">
+        <!-- Left Column -->
+        <div class="left-column">
+          <!-- Room Usage Status -->
+          <section class="dashboard-card room-status-card">
+            <div class="card-header">
+              <i class="fas fa-door-open"></i>
+              <h3>ROOM USAGE STATUS</h3>
+            </div>
+            <div class="card-content">
+              <div class="room-status-indicator status-unused">
+                <div class="status-icon">
+                  <i class="fas fa-door-closed"></i>
+                </div>
+                <div class="status-text">
+                  <h4>Room Not Used</h4>
+                  <p>AC is OFF</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Temperature Sensors -->
+          <section class="dashboard-card temperature-card">
+            <div class="card-header">
+              <i class="fas fa-thermometer-half"></i>
+              <h3>TEMPERATURE SENSORS</h3>
+            </div>
+            <div class="card-content">
+              <div class="sensors-grid">
+                <!-- Front Sensor -->
+                <div class="sensor-item" id="sensor-front">
+                  <div class="sensor-info">
+                    <div class="sensor-header">
+                      <i class="fas fa-temperature-high"></i>
+                      <span class="sensor-location">Front</span>
+                    </div>
+                    <div class="sensor-data">
+                      <div class="temperature">- °C</div>
+                      <div class="humidity">Humidity: -</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Side Sensor -->
+                <div class="sensor-item" id="sensor-side">
+                  <div class="sensor-info">
+                    <div class="sensor-header">
+                      <i class="fas fa-temperature-high"></i>
+                      <span class="sensor-location">Side</span>
+                    </div>
+                    <div class="sensor-data">
+                      <div class="temperature">- °C</div>
+                      <div class="humidity">Humidity: -</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Back Sensor -->
+                <div class="sensor-item" id="sensor-back">
+                  <div class="sensor-info">
+                    <div class="sensor-header">
+                      <i class="fas fa-temperature-high"></i>
+                      <span class="sensor-location">Back</span>
+                    </div>
+                    <div class="sensor-data">
+                      <div class="temperature">- °C</div>
+                      <div class="humidity">Humidity: -</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+          <!-- Room Status Overview -->
+          <section class="dashboard-card room-overview-card">
+            <div class="card-header">
+              <i class="fas fa-sensor"></i>
+              <h3>ROOM STATUS</h3>
+              <span class="mode-indicator auto" id="mode-indicator">
+                <i class="fas fa-robot"></i> Auto Mode
+              </span>
+            </div>
+            <div class="card-content">
+              <div class="status-container">
+                <!-- Occupancy Status -->
+                <div class="status-item">
+                  <div class="status-icon">
+                    <i class="fas fa-users"></i>
+                  </div>
+                  <div class="status-details">
+                    <div class="status-label">Occupancy</div>
+                    <div class="status-value">-</div>
+                  </div>
+                </div>
+
+                <!-- AC Controls -->
+                <div class="ac-container">
+                  <!-- AC Front -->
+                  <div class="ac-item" id="ac-front">
+                    <div class="ac-header">
+                      <i class="fas fa-fan"></i>
+                      <span class="ac-label">AC Front</span>
+                    </div>
+                    <div class="ac-details">
+                      <div class="ac-temperature">- °C</div>
+                      <div class="ac-status status-off">OFF</div>
+                    </div>
+                  </div>
+
+                  <!-- AC Side -->
+                  <div class="ac-item" id="ac-side">
+                    <div class="ac-header">
+                      <i class="fas fa-fan"></i>
+                      <span class="ac-label">AC Side</span>
+                    </div>
+                    <div class="ac-details">
+                      <div class="ac-temperature">- °C</div>
+                      <div class="ac-status status-off">OFF</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mode Control Buttons -->
+              <div class="mode-control">
+                <button class="btn btn-primary btn-active" id="auto-mode-btn">
+                  <i class="fas fa-robot"></i> Automatic Mode
+                </button>
+                <button class="btn btn-outline" id="manual-mode-btn">
+                  <i class="fas fa-hand-paper"></i> Manual Mode
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="dashboard-footer">
+        <p>Microcontroller Laboratory Monitoring System - POLINES</p>
+        <p>© 2025 - Skripsi</p>
+      </footer>
+    </div>
+
+    <!-- Manual Control Modal -->
+    <div id="manual-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-sliders-h"></i> Manual Control</h2>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <!-- AC Front Control -->
+          <div class="control-group">
+            <h3><i class="fas fa-fan"></i> Air Conditioner Front</h3>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" id="ac-front-switch" />
+                <span class="slider"></span>
+              </label>
+              <span class="switch-status" id="ac-front-status">OFF</span>
+            </div>
+            <div
+              class="temperature-control"
+              id="ac-front-temperature-control"
+              style="display: none"
+            >
+              <label for="ac-front-temperature">
+                Temperature: <span id="ac-front-temperature-value">17</span>°C
+              </label>
+              <input
+                type="range"
+                id="ac-front-temperature"
+                min="16"
+                max="30"
+                value="17"
+              />
+            </div>
+          </div>
+
+          <!-- AC Side Control -->
+          <div class="control-group">
+            <h3><i class="fas fa-fan"></i> Air Conditioner Side</h3>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" id="ac-side-switch" />
+                <span class="slider"></span>
+              </label>
+              <span class="switch-status" id="ac-side-status">OFF</span>
+            </div>
+            <div
+              class="temperature-control"
+              id="ac-side-temperature-control"
+              style="display: none"
+            >
+              <label for="ac-side-temperature">
+                Temperature: <span id="ac-side-temperature-value">17</span>°C
+              </label>
+              <input
+                type="range"
+                id="ac-side-temperature"
+                min="16"
+                max="30"
+                value="17"
+              />
+            </div>
+          </div>
+
+          <!-- Modal Actions -->
+          <div class="control-actions">
+            <button class="btn btn-primary" id="apply-changes">
+              <i class="fas fa-check"></i> Apply Changes
+            </button>
+            <button class="btn btn-outline" id="cancel-changes">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
