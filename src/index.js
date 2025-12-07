@@ -4,30 +4,10 @@ import dotenv from "dotenv";
 import dht22Routes from "./routes/dht22Route.js";
 import logRequest from "./middleware/logs.js";
 import cors from "cors";
-import http from "http";
-import { Server } from "socket.io";
+import "./mqtt/mqttClient.js";
 
 const app = express();
 dotenv.config();
-
-// HTTP server (Express + WebSocket)
-const server = http.createServer(app);
-
-// WebSocket server
-export const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
-});
-
-// Socket event
-io.on("connection", (socket) => {
-  console.log("⚡ WebSocket connected:", socket.id);
-
-  socket.on("disconnect", () => {
-    console.log("❌ WebSocket disconnected:", socket.id);
-  });
-});
 
 // Middleware
 app.use(logRequest);
@@ -36,7 +16,7 @@ app.use(express.json());
 app.use(cors());
 
 // Config
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 5000;
 const MONGOURL = process.env.MONGO_URL;
 
 // Routes DHT22
@@ -79,5 +59,3 @@ mongoose
     console.error("Database connection failed:", error.message);
     process.exit(1);
   });
-
-import "./mqtt/mqttClient.js";
