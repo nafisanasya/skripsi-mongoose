@@ -1,5 +1,48 @@
 // Konfigurasi API sesuai dengan backend
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "https://microlabmonitoring.cloud/api";
+
+// === WEBSOCKET REALTIME ===
+const socket = io("https://microlabmonitoring.cloud");
+socket.on("connect", () => {
+  console.log("⚡ WebSocket connected:", socket.id);
+});
+
+// === HANDLE REALTIME DATA DARI BACKEND ===
+socket.on("newDhtData", (data) => {
+  console.log("📡 Real-time data received:", data);
+
+  // Update UI sesuai lokasi sensor
+  if (data.location === "front") {
+    updateSensorRealtime("sensor-front", data);
+  } else if (data.location === "side") {
+    updateSensorRealtime("sensor-side", data);
+  } else if (data.location === "back") {
+    updateSensorRealtime("sensor-back", data);
+  }
+
+  updateRoomStatus();
+  updateRefreshTime();
+});
+
+// === FUNGSI UPDATE REALTIME TANPA REFRESH ===
+function updateSensorRealtime(sensorId, data) {
+  const sensorElement = document.getElementById(sensorId);
+  if (!sensorElement) return;
+
+  const temperature = sensorElement.querySelector(".temperature");
+  const humidity = sensorElement.querySelector(".humidity");
+
+  if (temperature) {
+    temperature.textContent = data.temperature + " °C";
+  }
+  if (humidity) {
+    humidity.textContent = "Humidity: " + data.humidity + "%";
+  }
+
+  // Animasi update
+  sensorElement.classList.add("updated");
+  setTimeout(() => sensorElement.classList.remove("updated"), 500);
+}
 
 // Debugging - Log ketika script dimuat
 console.log("✅ Script.js loaded successfully");
@@ -83,6 +126,7 @@ function updateRoomStatus() {
 
   // Check if any AC is ON
   let anyAcOn = false;
+
   acStatusElements.forEach((status) => {
     if (status.textContent === "ON") {
       anyAcOn = true;
@@ -669,7 +713,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setInterval(updateRefreshTime, 10000);
 
   // Fetch data dari backend setiap 10 detik
-  setInterval(fetchDataFromBackend, 10000);
+  // setInterval(fetchDataFromBackend, 10000);
 
   console.log("✅ Application initialization complete!");
 });
