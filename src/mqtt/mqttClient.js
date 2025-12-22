@@ -20,6 +20,7 @@ client.on("connect", () => {
   // Subscribe ke 2 topik
   client.subscribe("microlab/dht22/front", { qos: 1 });
   client.subscribe("microlab/dht22/side", { qos: 1 });
+  client.subscribe("microlab/dht22/back", { qos: 1 });
 
   console.log("📡 Subscribed to MQTT topics");
 });
