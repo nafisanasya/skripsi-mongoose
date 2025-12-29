@@ -1,12 +1,10 @@
 import { API_BASE, DEBUG } from "./config.js";
-import {
-  setDefaultData,
-  updateRoomStatus,
-  updateRefreshTime,
-} from "./utils.js";
-// =============================
-// Fetch Occupancy dari Backend
-// =============================
+import { updateRoomStatus } from "./utils.js";
+
+// Global State Occupancy
+let currentOccupancy = 0;
+
+// Fetch Occupancy dari Beckend
 async function fetchOccupancyFromBackend() {
   try {
     if (DEBUG) console.log("🔄 Fetching occupancy data from backend...");
@@ -24,59 +22,59 @@ async function fetchOccupancyFromBackend() {
     }
 
     updateOccupancyUI(occupancyData);
-    return occupancyData; // Return data untuk digunakan di tempat lain
+    return occupancyData;
   } catch (error) {
     console.error("❌ Error fetching occupancy data:", error);
     setDefaultOccupancy();
-    throw error; // Re-throw error untuk ditangani di main.js
   }
 }
 
-// =============================
-// Update UI Occupancy
-// =============================
+//Update UI Occupancy
 function updateOccupancyUI(data) {
   if (DEBUG) console.log("📊 Data received in updateOccupancyUI:", data);
 
   const occupancyElement = document.getElementById("occupancy-count");
-
   if (!occupancyElement) {
     console.warn("⚠️ occupancy-count element not found");
     return;
   }
 
-  // Handle different API response structures
-  let peopleCount = "-";
+  let peopleCount = 0;
 
-  if (data && data.data && data.data.people_count !== undefined) {
-    // Structure: { data: { people_count: 5 } }
+  if (data?.data?.people_count !== undefined) {
     peopleCount = data.data.people_count;
-  } else if (data && data.people_count !== undefined) {
-    // Structure: { people_count: 5 }
+  } else if (data?.people_count !== undefined) {
     peopleCount = data.people_count;
-  } else if (data && data.data && data.data.occupancy !== undefined) {
-    // Structure: { data: { occupancy: 5 } }
-    peopleCount = data.data.occupancy;
   }
 
+  // Update UI
   occupancyElement.textContent = peopleCount;
 
-  // animasi update (biar konsisten dengan DHT22)
+  // Update GLOBAL STATE
+  currentOccupancy = Number(peopleCount) || 0;
+
+  // Animasi
   occupancyElement.classList.add("updated");
   setTimeout(() => occupancyElement.classList.remove("updated"), 500);
+
+  // Update room status
+  updateRoomStatus();
 }
 
-// =============================
 // Default jika error
-// =============================
 function setDefaultOccupancy() {
   const occupancyElement = document.getElementById("occupancy-count");
   if (occupancyElement) {
     occupancyElement.textContent = "-";
   }
+  currentOccupancy = 0;
+  updateRoomStatus();
 }
 
-// =============================
-// Export fungsi
-// =============================
-export { fetchOccupancyFromBackend, updateOccupancyUI, setDefaultOccupancy };
+//Export
+export {
+  fetchOccupancyFromBackend,
+  updateOccupancyUI,
+  setDefaultOccupancy,
+  currentOccupancy,
+};

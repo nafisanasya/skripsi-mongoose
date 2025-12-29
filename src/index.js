@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import dht22Routes from "./routes/dht22Route.js";
 import occupancyRoutes from "./routes/occupancyRoute.js";
+import ACStatusRoutes from "./routes/ACStatusRoute.js";
 import logRequest from "./middleware/logs.js";
 import cors from "cors";
 import "./mqtt/mqttClient.js";
@@ -20,9 +21,10 @@ app.use(cors());
 const PORT = process.env.PORT || 5000;
 const MONGOURL = process.env.MONGO_URL;
 
-// Routes DHT22
+// Routes
 app.use("/api/dht22", dht22Routes);
 app.use("/api/occupancy", occupancyRoutes);
+app.use("/api/ac-status", ACStatusRoutes);
 
 // Route default untuk testing
 app.get("/api", (req, res) => {
@@ -40,6 +42,11 @@ app.get("/api", (req, res) => {
         getAll: "GET /api/occupancy",
         getLatest: "GET /api/occupancy/latest",
         create: "POST /api/occupancy (optional)",
+      },
+      acStatus: {
+        all: "GET /api/ac-status",
+        front: "GET /api/ac-status/front",
+        side: "GET /api/ac-status/side",
       },
     },
   });

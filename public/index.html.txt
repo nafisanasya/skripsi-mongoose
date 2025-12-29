@@ -12,6 +12,7 @@
   </head>
   <body>
     <div class="dashboard-container">
+      <!-- Header -->
       <header class="dashboard-header">
         <div class="header-content">
           <div class="logo-section">
@@ -40,8 +41,11 @@
         </div>
       </header>
 
+      <!-- Main Content -->
       <main class="dashboard-main">
+        <!-- Left Column -->
         <div class="left-column">
+          <!-- Room Usage Status -->
           <section class="dashboard-card room-status-card">
             <div class="card-header">
               <i class="fas fa-door-open"></i>
@@ -60,6 +64,7 @@
             </div>
           </section>
 
+          <!-- Temperature Sensors -->
           <section class="dashboard-card temperature-card">
             <div class="card-header">
               <i class="fas fa-thermometer-half"></i>
@@ -67,6 +72,7 @@
             </div>
             <div class="card-content">
               <div class="sensors-grid">
+                <!-- Front Sensor -->
                 <div class="sensor-item" id="sensor-front">
                   <div class="sensor-info">
                     <div class="sensor-header">
@@ -80,6 +86,7 @@
                   </div>
                 </div>
 
+                <!-- Side Sensor -->
                 <div class="sensor-item" id="sensor-side">
                   <div class="sensor-info">
                     <div class="sensor-header">
@@ -93,6 +100,7 @@
                   </div>
                 </div>
 
+                <!-- Back Sensor -->
                 <div class="sensor-item" id="sensor-back">
                   <div class="sensor-info">
                     <div class="sensor-header">
@@ -110,7 +118,9 @@
           </section>
         </div>
 
+        <!-- Right Column -->
         <div class="right-column">
+          <!-- Room Status Overview -->
           <section class="dashboard-card room-overview-card">
             <div class="card-header">
               <i class="fas fa-sensor"></i>
@@ -121,28 +131,20 @@
             </div>
             <div class="card-content">
               <div class="status-container">
-                <div class="occupancy-container">
-                  <div class="status-item occupancy-item compact">
-                    <div class="status-icon">
-                      <i class="fas fa-users"></i>
-                    </div>
-                    <div class="status-details">
-                      <div class="status-label">Occupancy</div>
-                      <div
-                        class="status-value small-value"
-                        id="occupancy-count"
-                      >
-                        -
-                      </div>
-                    </div>
+                <!-- Occupancy Status - TAMBAH ID DISINI -->
+                <div class="status-item">
+                  <div class="status-icon">
+                    <i class="fas fa-users"></i>
                   </div>
-
-                  <button class="btn btn-snapshot" id="view-snapshot-btn">
-                    <i class="fas fa-camera"></i> View Snapshot
-                  </button>
+                  <div class="status-details">
+                    <div class="status-label">Occupancy</div>
+                    <div class="status-value" id="occupancy-count">-</div>
+                  </div>
                 </div>
 
+                <!-- AC Controls -->
                 <div class="ac-container">
+                  <!-- AC Front -->
                   <div class="ac-item" id="ac-front">
                     <div class="ac-header">
                       <i class="fas fa-fan"></i>
@@ -154,6 +156,7 @@
                     </div>
                   </div>
 
+                  <!-- AC Side -->
                   <div class="ac-item" id="ac-side">
                     <div class="ac-header">
                       <i class="fas fa-fan"></i>
@@ -167,6 +170,7 @@
                 </div>
               </div>
 
+              <!-- Mode Control Buttons -->
               <div class="mode-control">
                 <button class="btn btn-primary btn-active" id="auto-mode-btn">
                   <i class="fas fa-robot"></i> Automatic Mode
@@ -180,19 +184,22 @@
         </div>
       </main>
 
+      <!-- Footer -->
       <footer class="dashboard-footer">
         <p>Microcontroller Laboratory Monitoring System - POLINES</p>
         <p>© 2025 - Skripsi</p>
       </footer>
     </div>
 
+    <!-- Manual Control Modal -->
     <div id="manual-modal" class="modal">
-      <div class="modal-content manual-modal">
+      <div class="modal-content">
         <div class="modal-header">
           <h2><i class="fas fa-sliders-h"></i> Manual Control</h2>
-          <span class="close close-manual">&times;</span>
+          <span class="close">&times;</span>
         </div>
         <div class="modal-body">
+          <!-- AC Front Control -->
           <div class="control-group">
             <h3><i class="fas fa-fan"></i> Air Conditioner Front</h3>
             <div class="switch-container">
@@ -220,6 +227,7 @@
             </div>
           </div>
 
+          <!-- AC Side Control -->
           <div class="control-group">
             <h3><i class="fas fa-fan"></i> Air Conditioner Side</h3>
             <div class="switch-container">
@@ -247,6 +255,7 @@
             </div>
           </div>
 
+          <!-- Modal Actions -->
           <div class="control-actions">
             <button class="btn btn-primary" id="apply-changes">
               <i class="fas fa-check"></i> Apply Changes
@@ -259,55 +268,7 @@
       </div>
     </div>
 
-    <div id="snapshot-modal" class="modal">
-      <div class="modal-content snapshot-modal">
-        <div class="modal-header">
-          <h2><i class="fas fa-camera"></i> Occupancy Snapshot</h2>
-          <span class="close close-snapshot">&times;</span>
-        </div>
-        <div class="modal-body">
-          <div class="snapshot-container">
-            <div class="snapshot-info-header">
-              <div class="snapshot-title">
-                <i class="fas fa-bounding-box"></i> Bounding Box YOLO Detection
-              </div>
-              <div class="snapshot-count-display">
-                Person count: <span id="snapshot-count">0</span>
-              </div>
-            </div>
-
-            <div class="snapshot-image-container" id="snapshot-image-container">
-              <div class="snapshot-placeholder">
-                <i class="fas fa-image fa-4x"></i>
-                <p>Loading snapshot...</p>
-              </div>
-              <img
-                id="snapshot-image"
-                src=""
-                alt="Occupancy Snapshot"
-                style="display: none"
-              />
-            </div>
-
-            <div class="snapshot-timestamp">
-              <i class="far fa-clock"></i>
-              Last updated: <span id="snapshot-timestamp">--:--:--</span>
-              <span class="update-info">(Updates every 5 minutes)</span>
-            </div>
-          </div>
-
-          <div class="snapshot-controls">
-            <button class="btn btn-refresh" id="refresh-snapshot-btn">
-              <i class="fas fa-sync-alt"></i> Refresh Now
-            </button>
-            <button class="btn btn-outline" id="close-snapshot-btn">
-              <i class="fas fa-times"></i> Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <!-- Load JavaScript sebagai modules -->
     <script type="module" src="js/main.js"></script>
   </body>
 </html>

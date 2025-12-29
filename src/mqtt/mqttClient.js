@@ -33,8 +33,8 @@ client.on("connect", () => {
   client.subscribe("microlab/occupancy", { qos: 1 });
 
   // Subscribe ke 2 topik (ACS712)
-  client.subscribe("microlab/ac/front", { qos: 1 });
-  client.subscribe("microlab/ac/side", { qos: 1 });
+  client.subscribe("microlab/ac-status/front", { qos: 1 });
+  client.subscribe("microlab/ac-status/side", { qos: 1 });
 
   console.log("📡 Subscribed to MQTT topics");
 });
@@ -72,11 +72,11 @@ client.on("message", async (topic, message) => {
     }
 
     // ACS712 (Tanpa Database)
-    if (topic === "microlab/ac/front") {
+    if (topic === "microlab/ac-status/front") {
       acStatus.front = data.ac_front;
       console.log("⚡ AC FRONT:", acStatus.front);
     }
-    if (topic === "microlab/ac/side") {
+    if (topic === "microlab/ac-status/side") {
       acStatus.side = data.ac_side;
       console.log("⚡ AC SIDE:", acStatus.side);
     }

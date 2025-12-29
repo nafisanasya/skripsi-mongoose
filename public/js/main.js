@@ -11,6 +11,12 @@ import {
 import { fetchDataFromBackend } from "./dht22.js";
 import { fetchOccupancyFromBackend, setDefaultOccupancy } from "./occupancy.js";
 import { setSystemMode } from "./mode-control.js";
+import {
+  initBoundingBox,
+  showSnapshotModal,
+  hideSnapshotModal,
+  cleanupBoundingBox,
+} from "./boundingBox.js";
 
 // Initialize ketika DOM sudah dimuat
 document.addEventListener("DOMContentLoaded", function () {
@@ -26,9 +32,10 @@ document.addEventListener("DOMContentLoaded", function () {
   // Set default occupancy
   setDefaultOccupancy();
 
-  // Setup event listeners untuk button dan modal
+  // Setup event listeners
   setupModeButtons();
   setupModal();
+  initBoundingBox(); // Inisialisasi bounding box system
 
   // Fetch data dari backend pertama kali
   fetchDataFromBackend();
@@ -195,6 +202,23 @@ function setupModal() {
       if (event.target === modal) {
         hideManualModal();
       }
+    });
+  }
+
+  // Setup View Snapshot button
+  const viewSnapshotBtn = document.getElementById("view-snapshot-btn");
+  if (viewSnapshotBtn) {
+    viewSnapshotBtn.addEventListener("click", function () {
+      console.log("📸 View Snapshot button clicked");
+      showSnapshotModal();
+    });
+  }
+
+  // Close snapshot modal when X is clicked
+  const closeSnapshotBtn = document.querySelector(".close-snapshot");
+  if (closeSnapshotBtn) {
+    closeSnapshotBtn.addEventListener("click", function () {
+      hideSnapshotModal();
     });
   }
 
@@ -416,7 +440,14 @@ function applyManualChanges() {
   }
 }
 
+// Cleanup ketika halaman ditutup
+window.addEventListener("beforeunload", function () {
+  cleanupBoundingBox();
+});
+
 // Export fungsi untuk penggunaan global jika diperlukan
 window.showManualModal = showManualModal;
 window.hideManualModal = hideManualModal;
 window.applyManualChanges = applyManualChanges;
+window.showSnapshotModal = showSnapshotModal;
+window.hideSnapshotModal = hideSnapshotModal;

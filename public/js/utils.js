@@ -1,6 +1,7 @@
 import { DEBUG } from "./config.js";
+import { currentOccupancy } from "./occupancy.js";
 
-// Update waktu terakhir refresh
+//Update Waktu Refresh
 function updateRefreshTime() {
   const now = new Date();
   const timeString = now.toLocaleTimeString("en-US", {
@@ -8,11 +9,12 @@ function updateRefreshTime() {
     minute: "2-digit",
     second: "2-digit",
   });
+
   const element = document.getElementById("update-time");
   if (element) element.textContent = timeString;
 }
 
-// Update tanggal
+// Update Tanggal
 function updateCurrentDate() {
   const now = new Date();
   const options = {
@@ -21,53 +23,45 @@ function updateCurrentDate() {
     month: "long",
     day: "numeric",
   };
+
   const dateString = now.toLocaleDateString("en-US", options);
   const element = document.getElementById("current-date");
   if (element) element.textContent = dateString;
 }
 
-// Set semua data ke nilai default (-)
+// Set Default Data
 function setDefaultData() {
   if (DEBUG) console.log("🔄 Setting default data...");
 
-  // Set sensor values to '-'
-  const temperatureElements = document.querySelectorAll(".temperature");
-  temperatureElements.forEach((temp) => {
-    temp.textContent = "- °C";
+  // Temperature
+  document.querySelectorAll(".temperature").forEach((el) => {
+    el.textContent = "- °C";
   });
 
-  // Set humidity to '-'
-  const humidityElements = document.querySelectorAll(".humidity");
-  humidityElements.forEach((humidity) => {
-    humidity.textContent = "Humidity: -";
+  // Humidity
+  document.querySelectorAll(".humidity").forEach((el) => {
+    el.textContent = "Humidity: -";
   });
 
-  // Set occupancy to '-' - TAMBAHKAN BAGIAN INI
+  // Occupancy
   const occupancyElement = document.getElementById("occupancy-count");
-  if (occupancyElement) {
-    occupancyElement.textContent = "-";
-  }
+  if (occupancyElement) occupancyElement.textContent = "-";
 
-  // Set AC status to 'OFF' and temperature to '-'
-  const acTemperatureElements = document.querySelectorAll(".ac-temperature");
-  const acStatusElements = document.querySelectorAll(".ac-status");
-
-  acTemperatureElements.forEach((temp) => {
-    temp.textContent = "- °C";
+  // AC
+  document.querySelectorAll(".ac-temperature").forEach((el) => {
+    el.textContent = "- °C";
   });
 
-  acStatusElements.forEach((status) => {
-    status.textContent = "OFF";
-    status.className = "ac-status status-off";
+  document.querySelectorAll(".ac-status").forEach((el) => {
+    el.textContent = "OFF";
+    el.className = "ac-status status-off";
   });
 
-  // Update room status
   updateRoomStatus();
 }
 
-// Update room status based on AC status
+// Update Status Ruangan
 function updateRoomStatus() {
-  const acStatusElements = document.querySelectorAll(".ac-status");
   const roomStatusIndicator = document.querySelector(".room-status-indicator");
 
   if (!roomStatusIndicator) {
@@ -79,28 +73,46 @@ function updateRoomStatus() {
   const statusText = roomStatusIndicator.querySelector("h4");
   const statusDetail = roomStatusIndicator.querySelector("p");
 
-  // Check if any AC is ON
+  // Jika Ada Orang = Room Used
+  if (currentOccupancy > 0) {
+    roomStatusIndicator.className = "room-status-indicator status-used";
+    statusIcon.className = "fas fa-door-open";
+    statusText.textContent = "Room Used";
+    statusDetail.textContent = `Occupancy: ${currentOccupancy} person(s)`;
+
+    if (DEBUG)
+      console.log("🟢 Room Used (Occupancy detected):", currentOccupancy);
+    return;
+  }
+
+  /* =========================
+     PRIORITAS 2: STATUS AC
+  ========================= */
   let anyAcOn = false;
-  acStatusElements.forEach((status) => {
+  document.querySelectorAll(".ac-status").forEach((status) => {
     if (status.textContent === "ON") {
       anyAcOn = true;
     }
   });
 
-  // Update room status
   if (anyAcOn) {
     roomStatusIndicator.className = "room-status-indicator status-used";
     statusIcon.className = "fas fa-door-open";
     statusText.textContent = "Room Used";
     statusDetail.textContent = "AC is ON";
+
+    if (DEBUG) console.log("🟢 Room Used (AC ON)");
   } else {
     roomStatusIndicator.className = "room-status-indicator status-unused";
     statusIcon.className = "fas fa-door-closed";
     statusText.textContent = "Room Not Used";
     statusDetail.textContent = "AC is OFF";
+
+    if (DEBUG) console.log("🔴 Room Not Used");
   }
 }
 
+// Export
 export {
   updateRefreshTime,
   updateCurrentDate,
