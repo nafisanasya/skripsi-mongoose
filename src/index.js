@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import dht22Routes from "./routes/dht22Route.js";
+import occupancyRoutes from "./routes/occupancyRoute.js";
 import logRequest from "./middleware/logs.js";
 import cors from "cors";
 import "./mqtt/mqttClient.js";
@@ -21,6 +22,7 @@ const MONGOURL = process.env.MONGO_URL;
 
 // Routes DHT22
 app.use("/api/dht22", dht22Routes);
+app.use("/api/occupancy", occupancyRoutes);
 
 // Route default untuk testing
 app.get("/api", (req, res) => {
@@ -34,6 +36,11 @@ app.get("/api", (req, res) => {
         getLatestDht: "GET /api/dht22/:location/latest",
         create: "POST /api/dht22",
       },
+      occupancy: {
+        getAll: "GET /api/occupancy",
+        getLatest: "GET /api/occupancy/latest",
+        create: "POST /api/occupancy (optional)",
+      },
     },
   });
 });
@@ -46,6 +53,7 @@ app.use((req, res) => {
   });
 });
 
+// MongoDB connection
 mongoose
   .connect(MONGOURL)
   .then(() => {
