@@ -1,7 +1,9 @@
 import { DEBUG } from "./config.js";
 import { currentOccupancy } from "./occupancy.js";
+// [BARU] Import status AC untuk logika status ruangan
+import { currentACStatus } from "./acStatus.js";
 
-//Update Waktu Refresh
+// Update Waktu Refresh
 function updateRefreshTime() {
   const now = new Date();
   const timeString = now.toLocaleTimeString("en-US", {
@@ -60,7 +62,7 @@ function setDefaultData() {
   updateRoomStatus();
 }
 
-// Update Status Ruangan
+// Update Status Ruangan (Logic diperbaiki)
 function updateRoomStatus() {
   const roomStatusIndicator = document.querySelector(".room-status-indicator");
 
@@ -73,7 +75,7 @@ function updateRoomStatus() {
   const statusText = roomStatusIndicator.querySelector("h4");
   const statusDetail = roomStatusIndicator.querySelector("p");
 
-  // Jika Ada Orang = Room Used
+  // KONDISI 1: Ada Orang = Room Used
   if (currentOccupancy > 0) {
     roomStatusIndicator.className = "room-status-indicator status-used";
     statusIcon.className = "fas fa-door-open";
@@ -82,33 +84,24 @@ function updateRoomStatus() {
 
     if (DEBUG)
       console.log("🟢 Room Used (Occupancy detected):", currentOccupancy);
-    return;
   }
-
-  /* =========================
-     PRIORITAS 2: STATUS AC
-  ========================= */
-  let anyAcOn = false;
-  document.querySelectorAll(".ac-status").forEach((status) => {
-    if (status.textContent === "ON") {
-      anyAcOn = true;
-    }
-  });
-
-  if (anyAcOn) {
-    roomStatusIndicator.className = "room-status-indicator status-used";
-    statusIcon.className = "fas fa-door-open";
-    statusText.textContent = "Room Used";
-    statusDetail.textContent = "AC is ON";
-
-    if (DEBUG) console.log("🟢 Room Used (AC ON)");
-  } else {
+  // KONDISI 2: Ruangan Kosong = Room Not Used
+  else {
     roomStatusIndicator.className = "room-status-indicator status-unused";
     statusIcon.className = "fas fa-door-closed";
     statusText.textContent = "Room Not Used";
-    statusDetail.textContent = "AC is OFF";
 
-    if (DEBUG) console.log("🔴 Room Not Used");
+    // Cek apakah AC masih menyala saat ruangan kosong?
+    const isAcOn =
+      currentACStatus.front === "ON" || currentACStatus.side === "ON";
+
+    if (isAcOn) {
+      statusDetail.textContent = "Warning: Room Empty but AC is ON!";
+    } else {
+      statusDetail.textContent = "AC is OFF";
+    }
+
+    if (DEBUG) console.log("🔴 Room Not Used (Empty)");
   }
 }
 
