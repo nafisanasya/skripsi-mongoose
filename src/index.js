@@ -1,11 +1,17 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import cors from "cors";
+
+// Routes
 import dht22Routes from "./routes/dht22Route.js";
 import occupancyRoutes from "./routes/occupancyRoute.js";
 import ACStatusRoutes from "./routes/ACStatusRoute.js";
+
+// Middleware
 import logRequest from "./middleware/logs.js";
-import cors from "cors";
+
+// MQTT Client (listener only)
 import "./mqtt/mqttClient.js";
 
 const app = express();
@@ -14,7 +20,6 @@ dotenv.config();
 // Middleware
 app.use(logRequest);
 app.use(express.json());
-
 app.use(cors());
 
 // Config
@@ -24,6 +29,7 @@ const MONGOURL = process.env.MONGO_URL;
 // Routes
 app.use("/api/dht22", dht22Routes);
 app.use("/api/occupancy", occupancyRoutes);
+app.use("/snapshot", express.static("/var/www/html/snapshot"));
 app.use("/api/ac-status", ACStatusRoutes);
 
 // Route default untuk testing
@@ -42,6 +48,9 @@ app.get("/api", (req, res) => {
         getAll: "GET /api/occupancy",
         getLatest: "GET /api/occupancy/latest",
         create: "POST /api/occupancy (optional)",
+      },
+      snapshot: {
+        latest: "GET /snapshot/occupancy.jpg",
       },
       acStatus: {
         all: "GET /api/ac-status",

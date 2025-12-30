@@ -1,167 +1,175 @@
-// boundingBox.js - Mengelola snapshot bounding box YOLO
-let snapshotInterval = null;
-const SNAPSHOT_UPDATE_INTERVAL = 5 * 60 * 1000; // 5 menit
+// =======================================================
+// boundingBox.js
+// Mengelola Snapshot Bounding Box YOLO (Occupancy)
+// =======================================================
 
-// Inisialisasi bounding box
+// Interval refresh snapshot (5 menit)
+const SNAPSHOT_UPDATE_INTERVAL = 5 * 60 * 1000;
+let snapshotInterval = null;
+
+// URL snapshot bounding box (static file dari backend)
+const SNAPSHOT_URL = "https://microlabmonitoring.cloud/snapshot/occupancy.jpg";
+
+// =======================================================
+// INITIALIZATION
+// =======================================================
 export function initBoundingBox() {
-  console.log("📸 Initializing bounding box snapshot system...");
-  setupSnapshotControls();
+  console.log("📸 Bounding Box Snapshot initialized");
+  setupSnapshotButtons();
 }
 
-// Setup event listeners tombol
-function setupSnapshotControls() {
-  const refreshBtn = document.getElementById("refresh-snapshot-btn");
+// =======================================================
+// SETUP BUTTON EVENTS
+// =======================================================
+function setupSnapshotButtons() {
+  const viewBtn = document.getElementById("view-snapshot-btn");
   const closeBtn = document.getElementById("close-snapshot-btn");
 
-  if (refreshBtn) refreshBtn.addEventListener("click", refreshSnapshot);
+  if (viewBtn) viewBtn.addEventListener("click", showSnapshotModal);
   if (closeBtn) closeBtn.addEventListener("click", hideSnapshotModal);
 }
 
-// Tampilkan modal snapshot
+// =======================================================
+// SHOW SNAPSHOT MODAL
+// =======================================================
 export function showSnapshotModal() {
-  console.log("📸 Showing snapshot modal");
-  const snapshotModal = document.getElementById("snapshot-modal");
+  const modal = document.getElementById("snapshot-modal");
+  if (!modal) return;
 
-  if (snapshotModal) {
-    // 1. Update angka saat modal dibuka
-    updateSnapshotCount();
+  // Sinkronisasi data saat modal dibuka
+  updateSnapshotCount();
+  refreshSnapshot();
+  startSnapshotInterval();
 
-    // 2. Load gambar snapshot
-    refreshSnapshot();
-
-    // 3. Mulai auto-refresh interval
-    startSnapshotInterval();
-
-    // 4. Tampilkan modal
-    snapshotModal.style.display = "flex"; // Gunakan flex agar centering CSS bekerja
-  }
+  modal.style.display = "flex";
 }
 
-// Sembunyikan modal
+// =======================================================
+// HIDE SNAPSHOT MODAL
+// =======================================================
 export function hideSnapshotModal() {
-  const snapshotModal = document.getElementById("snapshot-modal");
-  if (snapshotModal) {
-    snapshotModal.style.display = "none";
-    stopSnapshotInterval();
-  }
+  const modal = document.getElementById("snapshot-modal");
+  if (!modal) return;
+
+  modal.style.display = "none";
+  stopSnapshotInterval();
 }
 
-// Logic refresh snapshot
+// =======================================================
+// REFRESH SNAPSHOT IMAGE
+// =======================================================
 async function refreshSnapshot() {
-  console.log("🔄 Refreshing snapshot...");
+  console.log("🔄 Refreshing YOLO snapshot...");
   showLoadingState();
 
   try {
-    // Simulasi fetch gambar (Ganti dengan endpoint asli Anda nanti)
-    await fetchSnapshotFromBackend();
+    // Cache busting agar selalu ambil gambar terbaru
+    const imageUrl = `${SNAPSHOT_URL}?t=${Date.now()}`;
+    displaySnapshotImage(imageUrl);
 
-    // Update data pendukung
     updateSnapshotTimestamp();
-    updateSnapshotCount(); // Pastikan angka di-update lagi setelah refresh
+    updateSnapshotCount();
 
-    console.log("✅ Snapshot refreshed");
+    console.log("✅ Snapshot updated");
   } catch (error) {
-    console.error("❌ Failed to refresh snapshot:", error);
-    showErrorState("Failed to load snapshot.");
+    console.error("❌ Failed to load snapshot:", error);
+    showErrorState("Failed to load snapshot image");
   }
 }
 
-// Simulasi Backend Fetch (Untuk Demo)
-async function fetchSnapshotFromBackend() {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Gambar dummy random untuk demo
-      const demoImages = [
-        "https://placehold.co/600x400/2b6cb0/ffffff?text=YOLO+Detection+1",
-        "https://placehold.co/600x400/38a169/ffffff?text=YOLO+Detection+2",
-      ];
-      const randomImage =
-        demoImages[Math.floor(Math.random() * demoImages.length)];
+// =======================================================
+// DISPLAY SNAPSHOT IMAGE
+// =======================================================
+function displaySnapshotImage(imageUrl) {
+  const image = document.getElementById("snapshot-image");
+  const placeholder = document.querySelector(".snapshot-placeholder");
 
-      displaySnapshotImage(randomImage);
-      resolve();
-    }, 1000);
+  if (!image || !placeholder) return;
+
+  image.onload = () => {
+    placeholder.style.display = "none";
+    image.style.display = "block";
+  };
+
+  image.onerror = () => {
+    showErrorState("Snapshot image not available");
+  };
+
+  image.src = imageUrl;
+}
+
+// =======================================================
+// SYNC OCCUPANCY COUNT (FROM DASHBOARD)
+// =======================================================
+function updateSnapshotCount() {
+  const snapshotCount = document.getElementById("snapshot-count");
+  const occupancyCount = document.getElementById("occupancy-count");
+
+  if (!snapshotCount || !occupancyCount) return;
+
+  const value = occupancyCount.textContent;
+  snapshotCount.textContent = value;
+
+  const numericValue = parseInt(value);
+  if (!isNaN(numericValue) && numericValue > 0) {
+    snapshotCount.style.color = "var(--success)";
+    snapshotCount.style.fontWeight = "bold";
+  } else {
+    snapshotCount.style.color = "var(--accent-dark)";
+    snapshotCount.style.fontWeight = "normal";
+  }
+}
+
+// =======================================================
+// UPDATE TIMESTAMP
+// =======================================================
+function updateSnapshotTimestamp() {
+  const timestampEl = document.getElementById("snapshot-timestamp");
+  if (!timestampEl) return;
+
+  const now = new Date();
+  timestampEl.textContent = now.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 }
 
-function displaySnapshotImage(imageUrl) {
-  const snapshotImage = document.getElementById("snapshot-image");
-  const placeholder = document.querySelector(".snapshot-placeholder");
-
-  if (snapshotImage && placeholder) {
-    placeholder.style.display = "none";
-    snapshotImage.src = imageUrl;
-    snapshotImage.style.display = "block";
-  }
-}
-
-// ========================================================
-// BAGIAN YANG DIPERBAIKI (AGAR NILAI SAMA DENGAN OCCUPANCY)
-// ========================================================
-function updateSnapshotCount() {
-  const snapshotCount = document.getElementById("snapshot-count");
-  const occupancyCount = document.getElementById("occupancy-count"); // Elemen di Dashboard Utama
-
-  if (snapshotCount && occupancyCount) {
-    // 1. Ambil teks nilai dari dashboard utama
-    const realValue = occupancyCount.textContent;
-
-    // 2. Masukkan nilai tersebut ke dalam modal snapshot
-    snapshotCount.textContent = realValue;
-
-    // 3. Styling (Hijau jika ada orang, Biru jika kosong/strip)
-    const numericValue = parseInt(realValue);
-    if (!isNaN(numericValue) && numericValue > 0) {
-      snapshotCount.style.color = "var(--success)";
-      snapshotCount.style.fontWeight = "bold";
-    } else {
-      snapshotCount.style.color = "var(--accent-dark)";
-    }
-  }
-}
-
-// Update jam terakhir update
-function updateSnapshotTimestamp() {
-  const timestampElement = document.getElementById("snapshot-timestamp");
-  if (timestampElement) {
-    const now = new Date();
-    timestampElement.textContent = now.toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  }
-}
-
-// UI State: Loading
+// =======================================================
+// UI STATE: LOADING
+// =======================================================
 function showLoadingState() {
   const placeholder = document.querySelector(".snapshot-placeholder");
-  const snapshotImage = document.getElementById("snapshot-image");
+  const image = document.getElementById("snapshot-image");
+
+  if (image) image.style.display = "none";
 
   if (placeholder) {
-    // Icon loading circle notch (berputar) sesuai permintaan sebelumnya
     placeholder.innerHTML = `
-        <i class="fas fa-circle-notch fa-spin fa-3x"></i>
-        <p>Loading snapshot...</p>
+      <i class="fas fa-circle-notch fa-spin fa-3x"></i>
+      <p>Loading snapshot...</p>
     `;
     placeholder.style.display = "flex";
   }
-  if (snapshotImage) snapshotImage.style.display = "none";
 }
 
-// UI State: Error
+// =======================================================
+// UI STATE: ERROR
+// =======================================================
 function showErrorState(message) {
   const placeholder = document.querySelector(".snapshot-placeholder");
-  if (placeholder) {
-    placeholder.innerHTML = `
-        <i class="fas fa-exclamation-triangle fa-3x" style="color: var(--danger)"></i>
-        <p>${message}</p>
-    `;
-    placeholder.style.display = "flex";
-  }
+  if (!placeholder) return;
+
+  placeholder.innerHTML = `
+    <i class="fas fa-exclamation-triangle fa-3x" style="color: var(--danger)"></i>
+    <p>${message}</p>
+  `;
+  placeholder.style.display = "flex";
 }
 
-// Interval Management
+// =======================================================
+// INTERVAL MANAGEMENT
+// =======================================================
 function startSnapshotInterval() {
   stopSnapshotInterval();
   snapshotInterval = setInterval(refreshSnapshot, SNAPSHOT_UPDATE_INTERVAL);
@@ -174,6 +182,9 @@ function stopSnapshotInterval() {
   }
 }
 
+// =======================================================
+// CLEANUP
+// =======================================================
 export function cleanupBoundingBox() {
   stopSnapshotInterval();
 }
