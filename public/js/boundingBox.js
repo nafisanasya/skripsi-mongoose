@@ -8,7 +8,8 @@ const SNAPSHOT_UPDATE_INTERVAL = 5 * 60 * 1000;
 let snapshotInterval = null;
 
 // URL snapshot bounding box (static file dari backend)
-const SNAPSHOT_URL = "https://microlabmonitoring.cloud/snapshot/occupancy.jpg";
+const SNAPSHOT_URL =
+  "https://microlabmonitoring.cloud/images/snapshot/occupancy.jpg";
 
 // =======================================================
 // INITIALIZATION

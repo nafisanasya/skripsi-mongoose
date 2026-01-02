@@ -1,6 +1,5 @@
 import { DEBUG } from "./config.js";
 import { currentOccupancy } from "./occupancy.js";
-// [BARU] Import status AC untuk logika status ruangan
 import { currentACStatus } from "./acStatus.js";
 
 // Update Waktu Refresh
@@ -35,12 +34,12 @@ function updateCurrentDate() {
 function setDefaultData() {
   if (DEBUG) console.log("🔄 Setting default data...");
 
-  // Temperature
+  // Temperature (DHT22)
   document.querySelectorAll(".temperature").forEach((el) => {
     el.textContent = "- °C";
   });
 
-  // Humidity
+  // Humidity (DHT22)
   document.querySelectorAll(".humidity").forEach((el) => {
     el.textContent = "Humidity: -";
   });
@@ -49,11 +48,18 @@ function setDefaultData() {
   const occupancyElement = document.getElementById("occupancy-count");
   if (occupancyElement) occupancyElement.textContent = "-";
 
-  // AC
+  // AC Temperature (Manual Setpoint - jika ada)
   document.querySelectorAll(".ac-temperature").forEach((el) => {
     el.textContent = "- °C";
   });
 
+  // --- TAMBAHAN BARU: Reset Fuzzy Output ---
+  document.querySelectorAll(".fuzzy-temp").forEach((el) => {
+    el.textContent = "- °C";
+  });
+  // ----------------------------------------
+
+  // AC Status
   document.querySelectorAll(".ac-status").forEach((el) => {
     el.textContent = "OFF";
     el.className = "ac-status status-off";

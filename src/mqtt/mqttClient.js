@@ -1,6 +1,7 @@
 import mqtt from "mqtt";
 import Dht22 from "../models/dht22Model.js";
 import Occupancy from "../models/occupancyModel.js";
+import OutputFuzzy from "../models/outputFuzzyModel.js";
 
 const MQTT_BROKER = "mqtt://microlabmonitoring.cloud:1883";
 const MQTT_USER = "skripsi";
@@ -20,6 +21,12 @@ const acStatus = {
   side: "OFF",
 };
 
+// Suhu AC Berdasarkan Output Fuzzy
+const outputFuzzy = {
+  front: null,
+  side: null,
+};
+
 // Connect
 client.on("connect", () => {
   console.log("✅ MQTT Connected to microlabmonitoring.cloud");
@@ -35,6 +42,10 @@ client.on("connect", () => {
   // Subscribe ke 2 topik (ACS712)
   client.subscribe("microlab/ac-status/front", { qos: 1 });
   client.subscribe("microlab/ac-status/side", { qos: 1 });
+
+  // Subscribe output fuzzy (Setpoint AC)
+  client.subscribe("microlab/fuzzy/front", { qos: 1 });
+  client.subscribe("microlab/fuzzy/side", { qos: 1 });
 
   console.log("📡 Subscribed to MQTT topics");
 });
@@ -79,6 +90,18 @@ client.on("message", async (topic, message) => {
     if (topic === "microlab/ac-status/side") {
       acStatus.side = data.ac_side;
       console.log("⚡ AC SIDE:", acStatus.side);
+    }
+
+    // Output Suhu AC dari Fuzzy
+    if (topic.startsWith("microlab/fuzzy")) {
+      const newFuzzy = new OutputFuzzy({
+        location: data.location,
+        temperature: data.temperature,
+        timestamp: new Date(),
+      });
+
+      await newFuzzy.save();
+      console.log("❄️ [DB] Fuzzy Output Saved:", data.location);
     }
   } catch (err) {
     console.error("❌ Error saving MQTT data:", err.message);

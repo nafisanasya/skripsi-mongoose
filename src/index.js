@@ -7,6 +7,7 @@ import cors from "cors";
 import dht22Routes from "./routes/dht22Route.js";
 import occupancyRoutes from "./routes/occupancyRoute.js";
 import ACStatusRoutes from "./routes/ACStatusRoute.js";
+import outputFuzzyRoutes from "./routes/outputFuzzyRoute.js";
 
 // Middleware
 import logRequest from "./middleware/logs.js";
@@ -31,6 +32,7 @@ app.use("/api/dht22", dht22Routes);
 app.use("/api/occupancy", occupancyRoutes);
 app.use("/snapshot", express.static("/var/www/html/snapshot"));
 app.use("/api/ac-status", ACStatusRoutes);
+app.use("/api/fuzzy", outputFuzzyRoutes);
 
 // Route default untuk testing
 app.get("/api", (req, res) => {
@@ -56,6 +58,12 @@ app.get("/api", (req, res) => {
         all: "GET /api/ac-status",
         front: "GET /api/ac-status/front",
         side: "GET /api/ac-status/side",
+      },
+      fuzzy: {
+        getAll: "GET /api/fuzzy",
+        getByLocation: "GET /api/fuzzy/:location",
+        getLatest: "GET /api/fuzzy/:location/latest",
+        create: "POST /api/fuzzy",
       },
     },
   });

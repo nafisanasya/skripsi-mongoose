@@ -662,7 +662,8 @@
 /* MODIFIKASI: Container Gambar/Snapshot */
 .snapshot-image-container {
   width: 100%;
-  height: 300px;
+  /* height: 300px; */
+  /* min-height: 250px; */
   overflow: hidden;
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -672,9 +673,18 @@
   align-items: center;
   justify-content: center;
 
-  background-color: #f5f5f5;
+  background-color: transparent;
   margin-bottom: 15px;
   position: relative;
+
+  line-height: 0;
+}
+
+#snapshot-image {
+  width: 100%;
+  height: auto;
+  /* object-fit: contain; KUNCI: Agar gambar menyesuaikan wadah tanpa terpotong */
+  display: block;
 }
 
 /* MODIFIKASI: Placeholder Loading */
@@ -686,7 +696,11 @@
   justify-content: center; /* Tengah Vertikal */
 
   width: 100%;
-  height: 100%;
+  min-height: 250px;
+  background-color: #f5f5f5;
+
+  line-height: 1.5;
+
   color: var(--text-light);
   z-index: 1;
 }
@@ -1045,9 +1059,22 @@ input:checked + .slider:before {
     font-size: 1.4rem;
   }
 
+  /* --- PERBAIKAN UTAMA DI SINI --- */
+
+  /* 1. Wadah Gambar: Tinggi Auto */
+  /* Agar wadah menyusut pas mengikuti tinggi gambar (tanpa sisa putih) */
   .snapshot-image-container {
-    height: 220px;
+    height: auto;
+    min-height: 0;
   }
+
+  /* 2. Loading Placeholder: Tinggi Tetap */
+  /* Agar saat loading (belum ada gambar), kotaknya tidak gepeng */
+  .snapshot-placeholder {
+    min-height: 180px;
+  }
+
+  /* ------------------------------- */
 
   .status-item.occupancy-item.compact {
     padding: 10px 12px;
@@ -1083,7 +1110,6 @@ input:checked + .slider:before {
     width: 98%;
   }
 }
-
 /* ==================== */
 /* COMPACT VERSION ADJUSTMENTS */
 /* ==================== */

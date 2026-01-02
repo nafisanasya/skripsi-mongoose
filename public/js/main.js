@@ -11,6 +11,7 @@ import {
 import { fetchDataFromBackend } from "./dht22.js";
 import { fetchOccupancyFromBackend, setDefaultOccupancy } from "./occupancy.js";
 import { fetchACStatusFromBackend, setDefaultACStatus } from "./acStatus.js";
+import { fetchFuzzyFromBackend } from "./outputFuzzy.js";
 import { setSystemMode } from "./modeControl.js";
 import {
   initBoundingBox,
@@ -41,6 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
   fetchDataFromBackend();
   fetchOccupancyFromBackend();
   fetchACStatusFromBackend();
+  fetchFuzzyFromBackend();
 
   // Update refresh time every 10 seconds
   setInterval(updateRefreshTime, 10000);
@@ -49,6 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setInterval(fetchDataFromBackend, 10000);
   setInterval(fetchOccupancyFromBackend, 10000);
   setInterval(fetchACStatusFromBackend, 10000);
+  setInterval(fetchFuzzyFromBackend, 10000);
 
   console.log("✅ Application initialization complete!");
 });
