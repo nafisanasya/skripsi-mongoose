@@ -47,6 +47,9 @@ client.on("connect", () => {
   client.subscribe("microlab/fuzzy/front", { qos: 1 });
   client.subscribe("microlab/fuzzy/side", { qos: 1 });
 
+  // Subscribe Snapshot Refresh Manual
+  client.subscribe("microlab/snapshot/refresh", { qos: 1 });
+
   console.log("📡 Subscribed to MQTT topics");
 });
 
@@ -102,6 +105,11 @@ client.on("message", async (topic, message) => {
 
       await newFuzzy.save();
       console.log("❄️ [DB] Fuzzy Output Saved:", data.location);
+    }
+
+    // Snapshot Refresh
+    if (topic === "microlab/snapshot/refresh") {
+      console.log("🔄 Snapshot refresh command received:", data);
     }
   } catch (err) {
     console.error("❌ Error saving MQTT data:", err.message);

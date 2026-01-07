@@ -8,6 +8,7 @@ import dht22Routes from "./routes/dht22Route.js";
 import occupancyRoutes from "./routes/occupancyRoute.js";
 import ACStatusRoutes from "./routes/ACStatusRoute.js";
 import outputFuzzyRoutes from "./routes/outputFuzzyRoute.js";
+import snapshotRoutes from "./routes/snapshotRoute.js";
 
 // Middleware
 import logRequest from "./middleware/logs.js";
@@ -33,6 +34,7 @@ app.use("/api/occupancy", occupancyRoutes);
 app.use("/snapshot", express.static("/var/www/html/snapshot"));
 app.use("/api/ac-status", ACStatusRoutes);
 app.use("/api/fuzzy", outputFuzzyRoutes);
+app.use("/api/snapshot", snapshotRoutes);
 
 // Route default untuk testing
 app.get("/api", (req, res) => {
@@ -53,6 +55,7 @@ app.get("/api", (req, res) => {
       },
       snapshot: {
         latest: "GET /snapshot/occupancy.jpg",
+        refresh: "POST /api/snapshot/refresh",
       },
       acStatus: {
         all: "GET /api/ac-status",

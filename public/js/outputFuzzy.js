@@ -1,5 +1,4 @@
 import { API_BASE, DEBUG } from "./config.js";
-// Kita import fungsi utilitas yang sama (opsional: buat fungsi reset khusus jika perlu)
 import { updateRefreshTime } from "./utils.js";
 
 // Fungsi untuk update data fuzzy dari backend
@@ -7,7 +6,6 @@ async function fetchFuzzyFromBackend() {
   try {
     if (DEBUG) console.log("🔄 Starting to fetch fuzzy data from backend...");
 
-    // Ambil data dari API untuk front dan side secara parallel
     const [frontResponse, sideResponse] = await Promise.all([
       fetch(`${API_BASE}/fuzzy/front/latest`),
       fetch(`${API_BASE}/fuzzy/side/latest`),
@@ -30,14 +28,12 @@ async function fetchFuzzyFromBackend() {
       console.log("✅ Side Fuzzy received:", sideData);
     }
 
-    // Update UI dengan data dari backend
     updateUIWithFuzzyData({
       frontData: frontData,
       sideData: sideData,
     });
   } catch (error) {
     console.error("❌ Error fetching fuzzy data:", error);
-    // Opsional: Set tampilan ke "-" jika error
     resetFuzzyDisplay();
   }
 }
@@ -48,17 +44,15 @@ function updateUIWithFuzzyData(data) {
 
   // Update AC Front Output
   if (data.frontData && data.frontData.data) {
-    // Pastikan ID elemen di HTML sesuai (misal: ac-front)
     const acFront = document.getElementById("ac-front");
     if (acFront) {
-      // Pastikan ada class khusus untuk menampung nilai fuzzy (misal: .fuzzy-temp)
-      const fuzzyTemp = acFront.querySelector(".fuzzy-temp");
+      // PERBAIKAN: Ubah .fuzzy-temp menjadi .ac-temperature (sesuai HTML)
+      const fuzzyTemp = acFront.querySelector(".ac-temperature");
 
       if (fuzzyTemp) {
         fuzzyTemp.textContent = data.frontData.data.temperature + " °C";
       }
 
-      // Add update animation (efek kedip)
       acFront.classList.add("updated");
       setTimeout(() => acFront.classList.remove("updated"), 500);
     }
@@ -68,7 +62,8 @@ function updateUIWithFuzzyData(data) {
   if (data.sideData && data.sideData.data) {
     const acSide = document.getElementById("ac-side");
     if (acSide) {
-      const fuzzyTemp = acSide.querySelector(".fuzzy-temp");
+      // PERBAIKAN: Ubah .fuzzy-temp menjadi .ac-temperature (sesuai HTML)
+      const fuzzyTemp = acSide.querySelector(".ac-temperature");
 
       if (fuzzyTemp) {
         fuzzyTemp.textContent = data.sideData.data.temperature + " °C";
@@ -79,13 +74,13 @@ function updateUIWithFuzzyData(data) {
     }
   }
 
-  // Update waktu refresh terakhir
   updateRefreshTime();
 }
 
 // Fungsi helper kecil untuk reset tampilan jika error (local helper)
 function resetFuzzyDisplay() {
-  const elements = document.querySelectorAll(".fuzzy-temp");
+  // PERBAIKAN: Ubah selector menjadi .ac-temperature
+  const elements = document.querySelectorAll(".ac-temperature");
   elements.forEach((el) => (el.textContent = "- °C"));
 }
 

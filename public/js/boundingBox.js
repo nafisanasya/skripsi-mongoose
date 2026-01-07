@@ -1,8 +1,3 @@
-// =======================================================
-// boundingBox.js
-// Mengelola Snapshot Bounding Box YOLO (Occupancy)
-// =======================================================
-
 // Interval refresh snapshot (5 menit)
 const SNAPSHOT_UPDATE_INTERVAL = 5 * 60 * 1000;
 let snapshotInterval = null;
@@ -64,6 +59,12 @@ async function refreshSnapshot() {
   showLoadingState();
 
   try {
+    await fetch("/api/snapshot/refresh", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     // Cache busting agar selalu ambil gambar terbaru
     const imageUrl = `${SNAPSHOT_URL}?t=${Date.now()}`;
     displaySnapshotImage(imageUrl);
