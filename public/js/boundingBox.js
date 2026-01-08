@@ -6,8 +6,7 @@ import { API_BASE, DEBUG } from "./config.js";
 const SNAPSHOT_UPDATE_INTERVAL = 5 * 60 * 1000;
 let snapshotInterval = null;
 
-const SNAPSHOT_URL =
-  "https://microlabmonitoring.cloud/images/snapshot/occupancy.jpg";
+const SNAPSHOT_BASE_URL = "https://microlabmonitoring.cloud/images/snapshot";
 
 // =======================================================
 // INITIALIZATION
@@ -28,20 +27,18 @@ function setupSnapshotButtons() {
   if (viewBtn) viewBtn.addEventListener("click", showSnapshotModal);
   if (closeBtn) closeBtn.addEventListener("click", hideSnapshotModal);
 
-  // 🔹 REFRESH MANUAL (INI YANG TRIGGER BACKEND)
   if (refreshBtn) refreshBtn.addEventListener("click", refreshSnapshotManual);
 }
 
 // =======================================================
-// SHOW SNAPSHOT MODAL (TANPA REFRESH BACKEND)
+// SHOW SNAPSHOT MODAL
 // =======================================================
 export function showSnapshotModal() {
   const modal = document.getElementById("snapshot-modal");
   if (!modal) return;
 
-  updateSnapshotCount();
-  loadSnapshotImage(); // ⬅️ hanya load image
-  startSnapshotInterval(); // ⬅️ auto reload image
+  loadSnapshotImage();
+  startSnapshotInterval();
 
   modal.style.display = "flex";
 }
@@ -58,7 +55,7 @@ export function hideSnapshotModal() {
 }
 
 // =======================================================
-// MANUAL SNAPSHOT REFRESH (TRIGGER BACKEND + MQTT)
+// MANUAL SNAPSHOT REFRESH
 // =======================================================
 async function refreshSnapshotManual() {
   if (DEBUG) console.log("🔄 Manual snapshot refresh");
@@ -75,11 +72,12 @@ async function refreshSnapshotManual() {
       throw new Error("Snapshot refresh failed");
     }
 
-    // paksa browser menunggu backend
     await response.json();
 
-    // setelah backend selesai → load image terbaru
-    loadSnapshotImage();
+    // ⏳ tunggu Raspberry Pi + upload VPS
+    setTimeout(() => {
+      loadSnapshotImage();
+    }, 800);
   } catch (err) {
     console.error("❌ Snapshot refresh error:", err);
     showErrorState("Failed to refresh snapshot");
@@ -87,12 +85,23 @@ async function refreshSnapshotManual() {
 }
 
 // =======================================================
-// LOAD SNAPSHOT IMAGE ONLY (NO BACKEND CALL)
+// LOAD SNAPSHOT IMAGE (AMBIL FILE TERBARU)
 // =======================================================
-function loadSnapshotImage() {
-  const imageUrl = `${SNAPSHOT_URL}?t=${Date.now()}`;
-  displaySnapshotImage(imageUrl);
-  updateSnapshotTimestamp();
+async function loadSnapshotImage() {
+  try {
+    const res = await fetch(`${API_BASE}/snapshot/latest`);
+    if (!res.ok) throw new Error("Failed to get latest snapshot");
+
+    const data = await res.json();
+
+    const imageUrl = `${SNAPSHOT_BASE_URL}/${data.snapshot_file}`;
+    displaySnapshotImage(imageUrl);
+    updateSnapshotTimestamp();
+    updateSnapshotCountFromAPI(data.people_count);
+  } catch (err) {
+    console.error("❌ Load snapshot error:", err);
+    showErrorState("Snapshot image not available");
+  }
 }
 
 // =======================================================
@@ -117,15 +126,12 @@ function displaySnapshotImage(imageUrl) {
 }
 
 // =======================================================
-// SYNC OCCUPANCY COUNT
+// UPDATE OCCUPANCY COUNT (DARI API)
 // =======================================================
-function updateSnapshotCount() {
+function updateSnapshotCountFromAPI(value) {
   const snapshotCount = document.getElementById("snapshot-count");
-  const occupancyCount = document.getElementById("occupancy-count");
+  if (!snapshotCount) return;
 
-  if (!snapshotCount || !occupancyCount) return;
-
-  const value = occupancyCount.textContent;
   snapshotCount.textContent = value;
 
   const num = parseInt(value);
@@ -182,7 +188,7 @@ function showErrorState(message) {
 }
 
 // =======================================================
-// INTERVAL (AUTO LOAD IMAGE ONLY)
+// INTERVAL
 // =======================================================
 function startSnapshotInterval() {
   stopSnapshotInterval();
