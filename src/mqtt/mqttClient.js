@@ -48,7 +48,7 @@ client.on("connect", () => {
   client.subscribe("microlab/fuzzy/side", { qos: 1 });
 
   // Subscribe Snapshot Refresh Manual
-  client.subscribe("microlab/snapshot/refresh", { qos: 1 });
+  // client.subscribe("microlab/snapshot/refresh", { qos: 1 });
 
   console.log("📡 Subscribed to MQTT topics");
 });

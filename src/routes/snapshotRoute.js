@@ -1,5 +1,4 @@
 import express from "express";
-// PENTING: Import 'client' agar bisa kirim perintah ke MQTT (Raspberry Pi)
 import client from "../mqtt/mqttClient.js";
 
 const router = express.Router();
@@ -15,21 +14,35 @@ router.get("/", (req, res) => {
 // -----------------------------------------------------------
 // POST ROUTE (Untuk Refresh Snapshot dari Web)
 // -----------------------------------------------------------
+
+// 🔒 debounce sederhana (3 detik)
+let lastRefreshTime = 0;
+
 router.post("/refresh", (req, res) => {
   console.log("📸 Manual Snapshot Refresh Request");
 
-  // Topic MQTT untuk trigger snapshot
+  const now = Date.now();
+
+  // ⛔ Cegah refresh bertubi-tubi
+  if (now - lastRefreshTime < 5000) {
+    return res.status(429).json({
+      success: false,
+      message: "Snapshot masih diproses, silakan tunggu",
+    });
+  }
+
+  lastRefreshTime = now;
+
   const topic = "microlab/snapshot/refresh";
 
-  // Payload sederhana
   const payload = JSON.stringify({
     action: "REFRESH",
     source: "web",
     timestamp: new Date(),
   });
 
-  // Publish ke MQTT Broker
-  client.publish(topic, payload, { qos: 1 }, (err) => {
+  // ✅ MQTT command HARUS qos 0 & retain false
+  client.publish(topic, payload, { qos: 0, retain: false }, (err) => {
     if (err) {
       console.error("❌ Gagal mengirim snapshot refresh:", err);
       return res.status(500).json({
@@ -40,7 +53,6 @@ router.post("/refresh", (req, res) => {
 
     console.log(`📡 Snapshot refresh terkirim ke ${topic}`);
 
-    // Balas ke Frontend
     res.json({
       success: true,
       message: "Snapshot refresh berhasil dikirim",

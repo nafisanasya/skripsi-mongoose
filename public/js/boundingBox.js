@@ -1,8 +1,11 @@
-// Interval refresh snapshot (5 menit)
+import { API_BASE, DEBUG } from "./config.js";
+
+// =======================================================
+// CONFIG
+// =======================================================
 const SNAPSHOT_UPDATE_INTERVAL = 5 * 60 * 1000;
 let snapshotInterval = null;
 
-// URL snapshot bounding box (static file dari backend)
 const SNAPSHOT_URL =
   "https://microlabmonitoring.cloud/images/snapshot/occupancy.jpg";
 
@@ -10,32 +13,35 @@ const SNAPSHOT_URL =
 // INITIALIZATION
 // =======================================================
 export function initBoundingBox() {
-  console.log("📸 Bounding Box Snapshot initialized");
+  if (DEBUG) console.log("📸 Bounding Box initialized");
   setupSnapshotButtons();
 }
 
 // =======================================================
-// SETUP BUTTON EVENTS
+// BUTTON EVENTS
 // =======================================================
 function setupSnapshotButtons() {
   const viewBtn = document.getElementById("view-snapshot-btn");
   const closeBtn = document.getElementById("close-snapshot-btn");
+  const refreshBtn = document.getElementById("refresh-snapshot-btn");
 
   if (viewBtn) viewBtn.addEventListener("click", showSnapshotModal);
   if (closeBtn) closeBtn.addEventListener("click", hideSnapshotModal);
+
+  // 🔹 REFRESH MANUAL (INI YANG TRIGGER BACKEND)
+  if (refreshBtn) refreshBtn.addEventListener("click", refreshSnapshotManual);
 }
 
 // =======================================================
-// SHOW SNAPSHOT MODAL
+// SHOW SNAPSHOT MODAL (TANPA REFRESH BACKEND)
 // =======================================================
 export function showSnapshotModal() {
   const modal = document.getElementById("snapshot-modal");
   if (!modal) return;
 
-  // Sinkronisasi data saat modal dibuka
   updateSnapshotCount();
-  refreshSnapshot();
-  startSnapshotInterval();
+  loadSnapshotImage(); // ⬅️ hanya load image
+  startSnapshotInterval(); // ⬅️ auto reload image
 
   modal.style.display = "flex";
 }
@@ -52,31 +58,41 @@ export function hideSnapshotModal() {
 }
 
 // =======================================================
-// REFRESH SNAPSHOT IMAGE
+// MANUAL SNAPSHOT REFRESH (TRIGGER BACKEND + MQTT)
 // =======================================================
-async function refreshSnapshot() {
-  console.log("🔄 Refreshing YOLO snapshot...");
+async function refreshSnapshotManual() {
+  if (DEBUG) console.log("🔄 Manual snapshot refresh");
+
   showLoadingState();
 
   try {
-    await fetch("/api/snapshot/refresh", {
+    const response = await fetch(`${API_BASE}/snapshot/refresh`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
-    // Cache busting agar selalu ambil gambar terbaru
-    const imageUrl = `${SNAPSHOT_URL}?t=${Date.now()}`;
-    displaySnapshotImage(imageUrl);
 
-    updateSnapshotTimestamp();
-    updateSnapshotCount();
+    if (!response.ok) {
+      throw new Error("Snapshot refresh failed");
+    }
 
-    console.log("✅ Snapshot updated");
-  } catch (error) {
-    console.error("❌ Failed to load snapshot:", error);
-    showErrorState("Failed to load snapshot image");
+    // paksa browser menunggu backend
+    await response.json();
+
+    // setelah backend selesai → load image terbaru
+    loadSnapshotImage();
+  } catch (err) {
+    console.error("❌ Snapshot refresh error:", err);
+    showErrorState("Failed to refresh snapshot");
   }
+}
+
+// =======================================================
+// LOAD SNAPSHOT IMAGE ONLY (NO BACKEND CALL)
+// =======================================================
+function loadSnapshotImage() {
+  const imageUrl = `${SNAPSHOT_URL}?t=${Date.now()}`;
+  displaySnapshotImage(imageUrl);
+  updateSnapshotTimestamp();
 }
 
 // =======================================================
@@ -101,7 +117,7 @@ function displaySnapshotImage(imageUrl) {
 }
 
 // =======================================================
-// SYNC OCCUPANCY COUNT (FROM DASHBOARD)
+// SYNC OCCUPANCY COUNT
 // =======================================================
 function updateSnapshotCount() {
   const snapshotCount = document.getElementById("snapshot-count");
@@ -112,8 +128,8 @@ function updateSnapshotCount() {
   const value = occupancyCount.textContent;
   snapshotCount.textContent = value;
 
-  const numericValue = parseInt(value);
-  if (!isNaN(numericValue) && numericValue > 0) {
+  const num = parseInt(value);
+  if (!isNaN(num) && num > 0) {
     snapshotCount.style.color = "var(--success)";
     snapshotCount.style.fontWeight = "bold";
   } else {
@@ -123,14 +139,13 @@ function updateSnapshotCount() {
 }
 
 // =======================================================
-// UPDATE TIMESTAMP
+// TIMESTAMP
 // =======================================================
 function updateSnapshotTimestamp() {
-  const timestampEl = document.getElementById("snapshot-timestamp");
-  if (!timestampEl) return;
+  const el = document.getElementById("snapshot-timestamp");
+  if (!el) return;
 
-  const now = new Date();
-  timestampEl.textContent = now.toLocaleTimeString("id-ID", {
+  el.textContent = new Date().toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -138,7 +153,7 @@ function updateSnapshotTimestamp() {
 }
 
 // =======================================================
-// UI STATE: LOADING
+// UI STATES
 // =======================================================
 function showLoadingState() {
   const placeholder = document.querySelector(".snapshot-placeholder");
@@ -149,15 +164,12 @@ function showLoadingState() {
   if (placeholder) {
     placeholder.innerHTML = `
       <i class="fas fa-circle-notch fa-spin fa-3x"></i>
-      <p>Loading snapshot...</p>
+      <p>Refreshing snapshot...</p>
     `;
     placeholder.style.display = "flex";
   }
 }
 
-// =======================================================
-// UI STATE: ERROR
-// =======================================================
 function showErrorState(message) {
   const placeholder = document.querySelector(".snapshot-placeholder");
   if (!placeholder) return;
@@ -170,11 +182,11 @@ function showErrorState(message) {
 }
 
 // =======================================================
-// INTERVAL MANAGEMENT
+// INTERVAL (AUTO LOAD IMAGE ONLY)
 // =======================================================
 function startSnapshotInterval() {
   stopSnapshotInterval();
-  snapshotInterval = setInterval(refreshSnapshot, SNAPSHOT_UPDATE_INTERVAL);
+  snapshotInterval = setInterval(loadSnapshotImage, SNAPSHOT_UPDATE_INTERVAL);
 }
 
 function stopSnapshotInterval() {
