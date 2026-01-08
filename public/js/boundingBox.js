@@ -4,7 +4,9 @@ import { API_BASE, DEBUG } from "./config.js";
 // CONFIG
 // =======================================================
 const SNAPSHOT_UPDATE_INTERVAL = 5 * 60 * 1000;
+const SNAPSHOT_POLL_INTERVAL = 1000; // 🔹 polling tiap 1 detik
 let snapshotInterval = null;
+let pollingInterval = null;
 
 const SNAPSHOT_BASE_URL = "https://microlabmonitoring.cloud/images/snapshot";
 
@@ -26,7 +28,6 @@ function setupSnapshotButtons() {
 
   if (viewBtn) viewBtn.addEventListener("click", showSnapshotModal);
   if (closeBtn) closeBtn.addEventListener("click", hideSnapshotModal);
-
   if (refreshBtn) refreshBtn.addEventListener("click", refreshSnapshotManual);
 }
 
@@ -52,10 +53,11 @@ export function hideSnapshotModal() {
 
   modal.style.display = "none";
   stopSnapshotInterval();
+  stopPollingSnapshot();
 }
 
 // =======================================================
-// MANUAL SNAPSHOT REFRESH
+// MANUAL SNAPSHOT REFRESH (BUFFERING SAMPAI SELESAI)
 // =======================================================
 async function refreshSnapshotManual() {
   if (DEBUG) console.log("🔄 Manual snapshot refresh");
@@ -74,10 +76,8 @@ async function refreshSnapshotManual() {
 
     await response.json();
 
-    // ⏳ tunggu Raspberry Pi + upload VPS
-    setTimeout(() => {
-      loadSnapshotImage();
-    }, 800);
+    // 🔁 mulai polling status snapshot
+    startPollingSnapshot();
   } catch (err) {
     console.error("❌ Snapshot refresh error:", err);
     showErrorState("Failed to refresh snapshot");
@@ -85,7 +85,42 @@ async function refreshSnapshotManual() {
 }
 
 // =======================================================
-// LOAD SNAPSHOT IMAGE (AMBIL FILE TERBARU)
+// POLLING SNAPSHOT STATUS (INTI SOLUSI)
+// =======================================================
+function startPollingSnapshot() {
+  stopPollingSnapshot();
+
+  pollingInterval = setInterval(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/snapshot/latest`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      // ⏳ masih diproses → tetap buffering
+      if (data.processing === true) {
+        if (DEBUG) console.log("⏳ Snapshot masih diproses...");
+        return;
+      }
+
+      // ✅ sudah selesai → tampilkan
+      stopPollingSnapshot();
+      displaySnapshotResult(data);
+    } catch (err) {
+      console.error("❌ Polling snapshot error:", err);
+    }
+  }, SNAPSHOT_POLL_INTERVAL);
+}
+
+function stopPollingSnapshot() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
+// =======================================================
+// LOAD SNAPSHOT IMAGE (NORMAL / AUTO)
 // =======================================================
 async function loadSnapshotImage() {
   try {
@@ -93,15 +128,21 @@ async function loadSnapshotImage() {
     if (!res.ok) throw new Error("Failed to get latest snapshot");
 
     const data = await res.json();
-
-    const imageUrl = `${SNAPSHOT_BASE_URL}/${data.snapshot_file}`;
-    displaySnapshotImage(imageUrl);
-    updateSnapshotTimestamp();
-    updateSnapshotCountFromAPI(data.people_count);
+    displaySnapshotResult(data);
   } catch (err) {
     console.error("❌ Load snapshot error:", err);
     showErrorState("Snapshot image not available");
   }
+}
+
+// =======================================================
+// DISPLAY SNAPSHOT RESULT (GAMBAR + ANGKA)
+// =======================================================
+function displaySnapshotResult(data) {
+  const imageUrl = `${SNAPSHOT_BASE_URL}/${data.snapshot_file}?t=${Date.now()}`;
+  displaySnapshotImage(imageUrl);
+  updateSnapshotTimestamp();
+  updateSnapshotCountFromAPI(data.people_count);
 }
 
 // =======================================================
@@ -126,7 +167,7 @@ function displaySnapshotImage(imageUrl) {
 }
 
 // =======================================================
-// UPDATE OCCUPANCY COUNT (DARI API)
+// UPDATE OCCUPANCY COUNT
 // =======================================================
 function updateSnapshotCountFromAPI(value) {
   const snapshotCount = document.getElementById("snapshot-count");
@@ -188,7 +229,7 @@ function showErrorState(message) {
 }
 
 // =======================================================
-// INTERVAL
+// INTERVAL (AUTO REFRESH)
 // =======================================================
 function startSnapshotInterval() {
   stopSnapshotInterval();
@@ -207,4 +248,5 @@ function stopSnapshotInterval() {
 // =======================================================
 export function cleanupBoundingBox() {
   stopSnapshotInterval();
+  stopPollingSnapshot();
 }
