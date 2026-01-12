@@ -74,6 +74,7 @@ const createFuzzy = async (req, res) => {
   }
 
   try {
+    // Simpan hasil perhitungan Fuzzy ke Database
     const newData = await OutputFuzzy.create({
       location,
       temperature: parseFloat(temperature),

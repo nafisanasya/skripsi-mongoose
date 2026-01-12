@@ -18,8 +18,9 @@ function initializeDOMElements() {
     console.log("🔍 AC Side:", document.getElementById("ac-side"));
   }
 
-  // Pastikan semua elemen ada
+  // Pastikan semua elemen ada (Termasuk elemen di dalam Modal Popup)
   const requiredElements = [
+    // --- Dashboard Utama ---
     "manual-mode-btn",
     "auto-mode-btn",
     "sensor-front",
@@ -27,6 +28,21 @@ function initializeDOMElements() {
     "sensor-back",
     "ac-front",
     "ac-side",
+
+    // --- Modal Manual Control ---
+    "manual-modal", // Popup Container
+    "apply-changes", // Tombol Apply
+    "cancel-changes", // Tombol Cancel
+
+    // --- Kontrol AC Depan (Front) ---
+    "ac-front-switch", // Toggle ON/OFF
+    "ac-front-status", // Teks status
+    "ac-front-temperature", // Slider suhu
+
+    // --- Kontrol AC Samping (Side) ---
+    "ac-side-switch", // Toggle ON/OFF
+    "ac-side-status", // Teks status
+    "ac-side-temperature", // Slider suhu
   ];
 
   requiredElements.forEach((id) => {

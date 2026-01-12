@@ -12,7 +12,8 @@ import { fetchDataFromBackend } from "./dht22.js";
 import { fetchOccupancyFromBackend, setDefaultOccupancy } from "./occupancy.js";
 import { fetchACStatusFromBackend, setDefaultACStatus } from "./acStatus.js";
 import { fetchFuzzyFromBackend } from "./outputFuzzy.js";
-import { setSystemMode } from "./modeControl.js";
+// ✅ UPDATE: Import getSystemMode juga untuk sinkronisasi awal
+import { setSystemMode, getSystemMode } from "./modeControl.js";
 import {
   initBoundingBox,
   showSnapshotModal,
@@ -21,7 +22,7 @@ import {
 } from "./boundingBox.js";
 
 // Initialize ketika DOM sudah dimuat
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   console.log("📋 DOM fully loaded, initializing application...");
 
   // Update waktu dan tanggal
@@ -37,6 +38,10 @@ document.addEventListener("DOMContentLoaded", function () {
   setupModeButtons();
   setupModal();
   initBoundingBox();
+
+  // ✅ TAMBAHAN: Cek Mode Terakhir dari Database saat awal load
+  // Supaya tombol sinkron (Auto/Manual) dengan settingan server
+  await syncInitialMode();
 
   // Fetch data dari backend pertama kali
   fetchDataFromBackend();
@@ -61,16 +66,30 @@ let modal, closeBtn, cancelBtn, applyBtn;
 let acFrontSwitch, acFrontStatus, acFrontTemperature, acFrontTemperatureValue;
 let acSideSwitch, acSideStatus, acSideTemperature, acSideTemperatureValue;
 
-// Fungsi untuk setup event listeners pada button mode
-function setupModeButtons() {
+// ✅ FUNGSI BARU: Sinkronisasi Mode Awal
+async function syncInitialMode() {
+  try {
+    const currentStatus = await getSystemMode();
+    if (currentStatus) {
+      console.log("ℹ️ Initial System Mode:", currentStatus.mode);
+      updateModeUI(currentStatus.mode);
+    }
+  } catch (error) {
+    console.error("Gagal sync mode awal:", error);
+  }
+}
+
+// ✅ FUNGSI BARU: Helper Update UI Tombol (Supaya tidak duplikat kode)
+function updateModeUI(mode) {
   const manualBtn = document.getElementById("manual-mode-btn");
   const autoBtn = document.getElementById("auto-mode-btn");
   const modeIndicator = document.getElementById("mode-indicator");
+  const modal = document.getElementById("manual-modal");
 
   if (!manualBtn || !autoBtn) return;
 
-  // Open modal when Manual Mode is clicked
-  manualBtn.addEventListener("click", async function () {
+  if (mode === "manual") {
+    // Tampilan Manual Aktif
     manualBtn.classList.add("btn-active");
     manualBtn.classList.remove("btn-outline");
     autoBtn.classList.add("btn-outline");
@@ -83,7 +102,36 @@ function setupModeButtons() {
       modeIndicator.className = "mode-indicator manual";
       modeIndicator.innerHTML = '<i class="fas fa-hand-paper"></i> Manual Mode';
     }
+  } else {
+    // Tampilan Auto Aktif
+    autoBtn.classList.add("btn-primary", "btn-active");
+    autoBtn.classList.remove("btn-outline");
+    manualBtn.classList.add("btn-outline");
+    manualBtn.classList.remove("btn-active");
 
+    manualBtn.innerHTML = '<i class="fas fa-hand-paper"></i> Manual Mode';
+    autoBtn.innerHTML = '<i class="fas fa-robot"></i> Auto Mode';
+
+    if (modeIndicator) {
+      modeIndicator.className = "mode-indicator auto";
+      modeIndicator.innerHTML = '<i class="fas fa-robot"></i> Auto Mode';
+    }
+
+    // Kalau pindah ke Auto, tutup modal manual otomatis
+    if (modal) modal.style.display = "none";
+  }
+}
+
+// Fungsi untuk setup event listeners pada button mode
+function setupModeButtons() {
+  const manualBtn = document.getElementById("manual-mode-btn");
+  const autoBtn = document.getElementById("auto-mode-btn");
+
+  if (!manualBtn || !autoBtn) return;
+
+  // Open modal when Manual Mode is clicked
+  manualBtn.addEventListener("click", async function () {
+    updateModeUI("manual"); // ✅ Update UI pakai helper
     showManualModal();
 
     try {
@@ -95,19 +143,7 @@ function setupModeButtons() {
 
   // Return to automatic mode
   autoBtn.addEventListener("click", async function () {
-    autoBtn.classList.add("btn-primary", "btn-active");
-    autoBtn.classList.remove("btn-outline");
-    manualBtn.classList.add("btn-outline");
-    manualBtn.classList.remove("btn-active");
-
-    manualBtn.innerHTML = '<i class="fas fa-hand-paper"></i> Manual Mode';
-    autoBtn.innerHTML = '<i class="fas fa-robot"></i> Automatic Mode';
-
-    if (modeIndicator) {
-      modeIndicator.className = "mode-indicator auto";
-      modeIndicator.innerHTML = '<i class="fas fa-robot"></i> Auto Mode';
-    }
-
+    updateModeUI("auto"); // ✅ Update UI pakai helper
     hideManualModal();
 
     try {
@@ -242,69 +278,65 @@ function hideManualModal() {
 async function applyManualChanges() {
   console.log("✅ Apply changes clicked");
 
-  // 1. UPDATE TAMPILAN DASHBOARD (Agar responsif)
-  const acFrontElement = document.getElementById("ac-front");
-  if (acFrontElement) {
-    const statusEl = acFrontElement.querySelector(".ac-status");
-    const tempEl = acFrontElement.querySelector(".ac-temperature");
+  // ✅ PERBAIKAN LOGIKA: Kirim via setSystemMode agar masuk ke MQTT
 
-    if (acFrontSwitch.checked) {
-      statusEl.textContent = "ON";
-      statusEl.className = "ac-status status-on";
-      tempEl.textContent = acFrontTemperature.value + " °C";
-    } else {
-      statusEl.textContent = "OFF";
-      statusEl.className = "ac-status status-off";
-      tempEl.textContent = "- °C";
-    }
-  }
-
-  const acSideElement = document.getElementById("ac-side");
-  if (acSideElement) {
-    const statusEl = acSideElement.querySelector(".ac-status");
-    const tempEl = acSideElement.querySelector(".ac-temperature");
-
-    if (acSideSwitch.checked) {
-      statusEl.textContent = "ON";
-      statusEl.className = "ac-status status-on";
-      tempEl.textContent = acSideTemperature.value + " °C";
-    } else {
-      statusEl.textContent = "OFF";
-      statusEl.className = "ac-status status-off";
-      tempEl.textContent = "- °C";
-    }
-  }
-
-  updateRoomStatus();
-  hideManualModal();
-
-  // 2. KIRIM PERINTAH KE BACKEND
-  const payloadFront = {
-    location: "front",
-    action: acFrontSwitch.checked ? "ON" : "OFF",
-    temperature: parseInt(acFrontTemperature.value),
-  };
-
-  const payloadSide = {
-    location: "side",
-    action: acSideSwitch.checked ? "ON" : "OFF",
-    temperature: parseInt(acSideTemperature.value),
+  // 1. Siapkan Payload untuk Manual State
+  const manualStatePayload = {
+    acFront: acFrontSwitch.checked ? "ON" : "OFF",
+    acSide: acSideSwitch.checked ? "ON" : "OFF",
   };
 
   try {
-    console.log("📡 Sending commands to backend...");
+    console.log("📡 Sending Manual Config to Backend & MQTT...");
 
-    await sendACCommand(payloadFront);
-    await sendACCommand(payloadSide);
+    // Panggil setSystemMode dengan parameter lengkap (mode manual + state AC)
+    await setSystemMode("manual", manualStatePayload);
 
-    console.log("✅ All commands sent successfully");
+    console.log("✅ Manual config applied successfully");
+
+    // 2. Update Tampilan Dashboard (Agar responsif)
+    const acFrontElement = document.getElementById("ac-front");
+    if (acFrontElement) {
+      const statusEl = acFrontElement.querySelector(".ac-status");
+      const tempEl = acFrontElement.querySelector(".ac-temperature");
+
+      if (acFrontSwitch.checked) {
+        statusEl.textContent = "ON";
+        statusEl.className = "ac-status status-on";
+        tempEl.textContent = acFrontTemperature.value + " °C";
+      } else {
+        statusEl.textContent = "OFF";
+        statusEl.className = "ac-status status-off";
+        tempEl.textContent = "- °C";
+      }
+    }
+
+    const acSideElement = document.getElementById("ac-side");
+    if (acSideElement) {
+      const statusEl = acSideElement.querySelector(".ac-status");
+      const tempEl = acSideElement.querySelector(".ac-temperature");
+
+      if (acSideSwitch.checked) {
+        statusEl.textContent = "ON";
+        statusEl.className = "ac-status status-on";
+        tempEl.textContent = acSideTemperature.value + " °C";
+      } else {
+        statusEl.textContent = "OFF";
+        statusEl.className = "ac-status status-off";
+        tempEl.textContent = "- °C";
+      }
+    }
+
+    updateRoomStatus();
+    hideManualModal();
   } catch (error) {
-    console.error("❌ Failed to send AC control:", error);
-    alert("Gagal menghubungi server! Pastikan backend berjalan di port 5000.");
+    console.error("❌ Failed to apply manual config:", error);
+    alert("Gagal menghubungi server! Cek koneksi backend.");
   }
 }
 
-// Helper: Fetch API
+// Helper: Fetch API (Sudah tidak dipanggil di applyManualChanges,
+// tapi dibiarkan ada kalau-kalau dibutuhkan fitur lain)
 async function sendACCommand(data) {
   // Pastikan URL ini benar
   const API_URL = "http://localhost:5000/api/ac-status/control";

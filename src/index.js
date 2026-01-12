@@ -9,6 +9,7 @@ import occupancyRoutes from "./routes/occupancyRoute.js";
 import ACStatusRoutes from "./routes/ACStatusRoute.js";
 import outputFuzzyRoutes from "./routes/outputFuzzyRoute.js";
 import snapshotRoutes from "./routes/snapshotRoute.js";
+import modeControlRoutes from "./routes/modeControlRoute.js";
 
 // Middleware
 import logRequest from "./middleware/logs.js";
@@ -35,6 +36,7 @@ app.use("/snapshot", express.static("/var/www/html/snapshot"));
 app.use("/api/ac-status", ACStatusRoutes);
 app.use("/api/fuzzy", outputFuzzyRoutes);
 app.use("/api/snapshot", snapshotRoutes);
+app.use("/api/mode", modeControlRoutes);
 
 // Route default untuk testing
 app.get("/api", (req, res) => {
@@ -67,6 +69,10 @@ app.get("/api", (req, res) => {
         getByLocation: "GET /api/fuzzy/:location",
         getLatest: "GET /api/fuzzy/:location/latest",
         create: "POST /api/fuzzy",
+      },
+      mode: {
+        get: "GET /api/mode (Cek status auto/manual)",
+        update: "POST /api/mode (Ganti mode)",
       },
     },
   });
