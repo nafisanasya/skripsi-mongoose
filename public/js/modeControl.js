@@ -1,21 +1,28 @@
 import { API_BASE } from "./config.js";
 
 // 1. Fungsi Mengirim Perubahan Mode (POST)
-async function setSystemMode(mode) {
+// Parameter 'manualData' sifatnya opsional (hanya dipakai saat tombol Apply ditekan)
+async function setSystemMode(mode, manualData = null) {
   try {
     console.log(`📡 Sending mode to backend: ${mode}`);
 
-    // PERBAIKAN: Endpoint disesuaikan dengan route backend (/api/mode)
+    // Siapkan data yang mau dikirim
+    let payload = { mode: mode };
+
+    // PERBAIKAN PENTING:
+    // Hanya kirim manualState KALO MEMANG ADA DATA (Tombol Apply).
+    // Kalo cuma ganti mode (buka modal), manualData-nya null, jadi manualState TIDAK DIKIRIM.
+    // Ini mencegah AC mati kaget.
+    if (manualData) {
+      payload.manualState = manualData;
+    }
+
     const response = await fetch(`${API_BASE}/mode`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      // PERBAIKAN: Sertakan manualState default agar data lengkap
-      body: JSON.stringify({
-        mode: mode,
-        manualState: { acFront: "OFF", acSide: "OFF" },
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -31,7 +38,7 @@ async function setSystemMode(mode) {
   }
 }
 
-// 2. Fungsi Mengambil Status Saat Ini (GET) - Untuk Initial Load
+// 2. Fungsi Mengambil Status Saat Ini (GET)
 async function getSystemMode() {
   try {
     const response = await fetch(`${API_BASE}/mode`);
@@ -41,7 +48,7 @@ async function getSystemMode() {
     }
 
     const result = await response.json();
-    return result.data; // Mengembalikan object { mode: 'auto', ... }
+    return result.data;
   } catch (error) {
     console.error("❌ Error getting system mode:", error);
     return null;

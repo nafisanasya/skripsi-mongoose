@@ -4,22 +4,31 @@ const modeSchema = new mongoose.Schema({
   mode: {
     type: String,
     required: true,
-    enum: ["auto", "manual"], // Membatasi input hanya boleh 'auto' atau 'manual'
-    default: "auto", // Defaultnya otomatis saat sistem baru jalan
+    enum: ["auto", "manual"],
+    default: "auto",
   },
-  // Opsional: Untuk mencatat status AC terakhir saat mode Manual dipilih
+
+  // Settingan Manual (Hanya terisi jika tombol Apply ditekan)
   manualState: {
     acFront: {
       type: String,
       enum: ["ON", "OFF"],
-      default: "OFF",
+      // HAPUS default: "OFF" -> Biar DB gak maksa AC mati kalau datanya kosong
     },
     acSide: {
       type: String,
       enum: ["ON", "OFF"],
-      default: "OFF",
+      // HAPUS default: "OFF"
+    },
+    // ✅ TAMBAHAN: Simpan suhu slider dari web
+    temperature: {
+      type: Number,
+      min: 16,
+      max: 30,
+      default: 22, // Default suhu aman kalau user lupa set
     },
   },
+
   timestamp: {
     type: Date,
     default: Date.now,

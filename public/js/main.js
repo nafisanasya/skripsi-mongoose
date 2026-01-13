@@ -278,18 +278,26 @@ function hideManualModal() {
 async function applyManualChanges() {
   console.log("✅ Apply changes clicked");
 
-  // ✅ PERBAIKAN LOGIKA: Kirim via setSystemMode agar masuk ke MQTT
+  // ✅ PERBAIKAN LOGIKA: Ambil nilai SUHU dari Slider
+  let tempValue = 22; // Default
+  if (acFrontTemperature) {
+    tempValue = parseInt(acFrontTemperature.value);
+  }
 
-  // 1. Siapkan Payload untuk Manual State
+  // 1. Siapkan Payload untuk Manual State LENGKAP (Status AC + Suhu)
   const manualStatePayload = {
     acFront: acFrontSwitch.checked ? "ON" : "OFF",
     acSide: acSideSwitch.checked ? "ON" : "OFF",
+    temperature: tempValue, // <-- SUHU DIKIRIM KE SINI
   };
 
   try {
-    console.log("📡 Sending Manual Config to Backend & MQTT...");
+    console.log(
+      "📡 Sending Manual Config to Backend & MQTT...",
+      manualStatePayload
+    );
 
-    // Panggil setSystemMode dengan parameter lengkap (mode manual + state AC)
+    // Panggil setSystemMode dengan parameter lengkap (mode manual + state AC + suhu)
     await setSystemMode("manual", manualStatePayload);
 
     console.log("✅ Manual config applied successfully");

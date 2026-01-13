@@ -1,17 +1,15 @@
 import ModeControl from "../models/modeControlModel.js";
-import mqttClient from "../mqtt/mqttClient.js"; // ✅ 1. Import MQTT Client
+import mqttClient from "../mqtt/mqttClient.js";
 
-// Ambil status mode saat ini (paling baru berdasarkan timestamp)
+// Ambil status mode saat ini
 const getCurrentMode = async (req, res) => {
   try {
-    // Cari data mode yang terakhir dibuat (sort descending by timestamp)
     let currentData = await ModeControl.findOne().sort({ timestamp: -1 });
 
-    // Jika database masih kosong (belum pernah disetting), kita anggap default AUTO
     if (!currentData) {
       return res.json({
         message: "No mode settings found, default to AUTO",
-        data: { mode: "auto", manualState: { acFront: "OFF", acSide: "OFF" } },
+        data: { mode: "auto" }, // Default aman, gak maksa OFF
       });
     }
 
@@ -32,45 +30,46 @@ const createMode = async (req, res) => {
   const { mode, manualState } = req.body;
 
   // Validasi input
-  if (!mode) {
-    return res.status(400).json({
-      message: "Mode (auto/manual) is required",
-    });
-  }
-
-  // Validasi tambahan: Cek apakah nilai mode valid
-  if (mode !== "auto" && mode !== "manual") {
+  if (!mode || (mode !== "auto" && mode !== "manual")) {
     return res.status(400).json({
       message: "Invalid mode. Only 'auto' or 'manual' allowed.",
     });
   }
 
   try {
-    // 1. Simpan ke Database (Log History)
+    // 1. Simpan ke Database
     const newData = await ModeControl.create({
       mode,
-      manualState, // Bisa null/undefined kalau user cuma ganti ke AUTO
+      manualState,
     });
 
     // -----------------------------------------------------------
     // UPDATE: KIRIM NOTIFIKASI KE ESP32 LEWAT MQTT
     // -----------------------------------------------------------
-
-    // Topik khusus untuk memberi tahu sistem ganti mode
     const topic = "microlab/system/mode";
 
-    const payload = JSON.stringify({
-      mode: mode, // 'auto' atau 'manual'
-      manualState: manualState || { acFront: "OFF", acSide: "OFF" },
+    // --- LOGIKA PERBAIKAN DI SINI ---
+    // Kita buat object payload dasar
+    let mqttData = {
+      mode: mode,
       updatedAt: new Date().toISOString(),
-    });
+    };
+
+    // HANYA jika ada manualState (Tombol Apply ditekan), baru kita masukkan.
+    // Kalau cuma buka modal (manualState undefined), kita JANGAN kirim data AC.
+    // Jadi Backend TIDAK LAGI "sok tahu" mematikan AC.
+    if (manualState) {
+      mqttData.manualState = manualState;
+      console.log("🎮 Manual Command Sent (Apply Button):", manualState);
+    } else {
+      console.log("ℹ️ Mode Switched Only (No AC Command Sent).");
+    }
+
+    const payload = JSON.stringify(mqttData);
 
     if (mqttClient.connected) {
-      // Kita pakai opsi { retain: true }
-      // Fungsinya: Jika ESP32 mati/restart, saat nyala dia langsung
-      // otomatis menerima pesan terakhir ini (tidak perlu tunggu user klik lagi)
+      // retain: true supaya ESP32 ingat mode terakhir kalau restart
       mqttClient.publish(topic, payload, { qos: 1, retain: true });
-
       console.log(`📢 System Mode changed to [${mode}]. Broadcasted to MQTT.`);
     } else {
       console.error(
@@ -80,11 +79,10 @@ const createMode = async (req, res) => {
     // -----------------------------------------------------------
 
     res.status(201).json({
-      message: "Mode updated successfully & sent to device",
+      message: "Mode updated successfully",
       data: newData,
     });
   } catch (error) {
-    // Tangani error validasi Mongoose
     if (error.name === "ValidationError") {
       return res.status(400).json({
         message: "Validation Error",
