@@ -78,6 +78,7 @@ client.on("message", async (topic, message) => {
     if (topic === "microlab/occupancy") {
       const newOccupancy = new Occupancy({
         people_count: data.people_count,
+        snapshot_file: data.snapshot_file,
         timestamp: new Date(),
       });
 
