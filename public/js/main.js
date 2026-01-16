@@ -1,4 +1,4 @@
-// Main.js - Entry point utama
+// Entry point utama
 console.log("🚀 Main.js loaded successfully");
 
 // Import fungsi-fungsi yang diperlukan
@@ -40,13 +40,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   setupModal();
   initBoundingBox();
 
-  // TAMBAHAN: Cek Mode Terakhir dari Database saat awal load
+  // Cek Mode Terakhir dari Database saat awal load
   await syncInitialMode();
 
   // Fetch data dari backend pertama kali
   fetchAllData();
 
-  // PERBAIKAN: Gunakan fungsi startPolling untuk memulai interval data
+  // Gunakan fungsi startPolling untuk memulai interval data
   startPolling();
 
   // Update refresh time every 10 seconds (Jam tetap jalan terus)
@@ -236,15 +236,22 @@ function setupModal() {
     });
   }
 
-  // Update Temperature Value
+  // Setup Temperature Display dengan DUA SUHU TERPISAH
   if (acFrontTemperature) {
     acFrontTemperature.addEventListener("input", function () {
-      acFrontTemperatureValue.textContent = acFrontTemperature.value;
+      if (acFrontTemperatureValue) {
+        acFrontTemperatureValue.textContent = this.value + "°C";
+      }
+      console.log(`🎚️ Front slider changed to: ${this.value}°C`);
     });
   }
+
   if (acSideTemperature) {
     acSideTemperature.addEventListener("input", function () {
-      acSideTemperatureValue.textContent = acSideTemperature.value;
+      if (acSideTemperatureValue) {
+        acSideTemperatureValue.textContent = this.value + "°C";
+      }
+      console.log(`🎚️ Side slider changed to: ${this.value}°C`);
     });
   }
 }
@@ -295,25 +302,47 @@ function hideManualModal() {
   startPolling();
 }
 
-// APPLY CHANGES (Kirim ke Backend)
 async function applyManualChanges() {
   console.log("✅ Apply changes clicked");
 
-  // Ambil Nilai Suhu (Validasi agar tidak NaN)
-  let tempValue = 22; // Default jika gagal baca
+  let tempFrontValue = 22; // Default suhu depan
+  let tempSideValue = 22; // Default suhu samping
+
+  // Ambil nilai suhu depan
   if (acFrontTemperature && acFrontTemperature.value) {
     const parsedVal = parseInt(acFrontTemperature.value);
     if (!isNaN(parsedVal)) {
-      tempValue = parsedVal;
+      tempFrontValue = parsedVal;
     }
   }
 
-  // Siapkan Payload (Switch + Temperature)
+  // Ambil nilai suhu samping
+  if (acSideTemperature && acSideTemperature.value) {
+    const parsedVal = parseInt(acSideTemperature.value);
+    if (!isNaN(parsedVal)) {
+      tempSideValue = parsedVal;
+    }
+  }
+
   const manualStatePayload = {
     acFront: acFrontSwitch.checked ? "ON" : "OFF",
     acSide: acSideSwitch.checked ? "ON" : "OFF",
-    temperature: tempValue, // <-- PENTING: Mengirim suhu ke backend
+    temperatureFront: tempFrontValue,
+    temperatureSide: tempSideValue,
   };
+
+  // Debug: Tampilkan nilai slider
+  console.log("🔍 Slider values:");
+  console.log(
+    `   Front: ${
+      acFrontTemperature ? acFrontTemperature.value : "N/A"
+    }°C → ${tempFrontValue}°C`
+  );
+  console.log(
+    `   Side: ${
+      acSideTemperature ? acSideTemperature.value : "N/A"
+    }°C → ${tempSideValue}°C`
+  );
 
   try {
     console.log(
@@ -322,12 +351,10 @@ async function applyManualChanges() {
     );
 
     // Panggil setSystemMode dengan parameter lengkap
-    await setSystemMode("manual", manualStatePayload);
+    const result = await setSystemMode("manual", manualStatePayload);
+    console.log("✅ Manual config applied successfully:", result);
 
-    console.log("✅ Manual config applied successfully");
-
-    // Update Tampilan Dashboard (Biar sinkron dengan modal)
-    // Update manual agar instant feedback sebelum polling jalan lagi
+    // Update Tampilan Dashboard
     const acFrontElement = document.getElementById("ac-front");
     if (acFrontElement) {
       const statusEl = acFrontElement.querySelector(".ac-status");
@@ -336,7 +363,7 @@ async function applyManualChanges() {
       if (acFrontSwitch.checked) {
         statusEl.textContent = "ON";
         statusEl.className = "ac-status status-on";
-        tempEl.textContent = acFrontTemperature.value + " °C";
+        tempEl.textContent = tempFrontValue + " °C";
       } else {
         statusEl.textContent = "OFF";
         statusEl.className = "ac-status status-off";
@@ -352,10 +379,7 @@ async function applyManualChanges() {
       if (acSideSwitch.checked) {
         statusEl.textContent = "ON";
         statusEl.className = "ac-status status-on";
-        const sideTempDisplay = acSideTemperature
-          ? acSideTemperature.value
-          : acFrontTemperature.value;
-        tempEl.textContent = sideTempDisplay + " °C";
+        tempEl.textContent = tempSideValue + " °C"; // ← Gunakan tempSideValue
       } else {
         statusEl.textContent = "OFF";
         statusEl.className = "ac-status status-off";
@@ -364,11 +388,10 @@ async function applyManualChanges() {
     }
 
     updateRoomStatus();
-    hideManualModal(); // Ini akan memanggil startPolling kembali
+    hideManualModal();
   } catch (error) {
     console.error("❌ Failed to apply manual config:", error);
     alert("Gagal menghubungi server! Cek koneksi backend.");
-    // Tetap tutup modal agar polling jalan lagi
     hideManualModal();
   }
 }

@@ -54,81 +54,115 @@ function initializeDOMElements() {
     }
   });
 
-  // --- TAMBAHAN UNTUK DEBUGGING SLIDER MASALAH ---
-  addSliderDebugging();
+  // PERBAIKAN: Setup event listener untuk tombol Apply
+  setupManualControl();
 }
 
-// Fungsi baru untuk debugging slider
-function addSliderDebugging() {
-  // Cari slider temperature
-  const sliderFront = document.getElementById("ac-front-temperature");
-  const sliderSide = document.getElementById("ac-side-temperature");
+// Fungsi untuk setup manual control
+function setupManualControl() {
   const applyButton = document.getElementById("apply-changes");
 
-  if (!sliderFront || !sliderSide || !applyButton) {
-    if (DEBUG)
-      console.error("❌ Debug: Slider atau Apply button tidak ditemukan");
+  if (!applyButton) {
+    console.error("❌ Apply button tidak ditemukan!");
     return;
   }
 
-  // Debug ketika slider berubah
-  sliderFront.addEventListener("input", function () {
-    console.log(
-      `🎚️ Front slider changed: ${this.value} (type: ${typeof this.value})`
-    );
-    console.log(`📊 Front slider parsed: ${parseInt(this.value)}`);
-  });
-
-  sliderSide.addEventListener("input", function () {
-    console.log(
-      `🎚️ Side slider changed: ${this.value} (type: ${typeof this.value})`
-    );
-    console.log(`📊 Side slider parsed: ${parseInt(this.value)}`);
-  });
-
-  // Debug ketika tombol Apply diklik
-  applyButton.addEventListener("click", function () {
-    const sliderValueFront = sliderFront.value;
-    const sliderValueSide = sliderSide.value;
-
+  applyButton.addEventListener("click", async function () {
     console.log("🔴 ======== APPLY BUTTON CLICKED ========");
-    console.log(
-      `🎚️ Front slider value: ${sliderValueFront} (type: ${typeof sliderValueFront})`
-    );
-    console.log(
-      `🎚️ Side slider value: ${sliderValueSide} (type: ${typeof sliderValueSide})`
-    );
 
-    // Cek toggle status
+    // Ambil nilai dari slider
+    const sliderFront = document.getElementById("ac-front-temperature");
+    const sliderSide = document.getElementById("ac-side-temperature");
     const toggleFront = document.getElementById("ac-front-switch");
     const toggleSide = document.getElementById("ac-side-switch");
 
-    if (toggleFront) {
-      const frontStatus = toggleFront.checked ? "ON" : "OFF";
-      console.log(`🔌 AC Front toggle: ${frontStatus}`);
+    // Validasi elemen
+    if (!sliderFront || !sliderSide || !toggleFront || !toggleSide) {
+      console.error("❌ Error: Element tidak ditemukan!");
+      return;
     }
 
-    if (toggleSide) {
-      const sideStatus = toggleSide.checked ? "ON" : "OFF";
-      console.log(`🔌 AC Side toggle: ${sideStatus}`);
+    // Ambil nilai
+    const frontTemp = parseInt(sliderFront.value);
+    const sideTemp = parseInt(sliderSide.value);
+    const acFrontStatus = toggleFront.checked ? "ON" : "OFF";
+    const acSideStatus = toggleSide.checked ? "ON" : "OFF";
+
+    console.log(`🎚️ Front slider: ${frontTemp}°C, Side slider: ${sideTemp}°C`);
+    console.log(`🔌 Status: Front ${acFrontStatus}, Side ${acSideStatus}`);
+
+    // Siapkan data manual dengan DUA SUHU TERPISAH
+    const manualData = {
+      acFront: acFrontStatus,
+      acSide: acSideStatus,
+      temperatureFront: frontTemp,
+      temperatureSide: sideTemp,
+    };
+
+    console.log("📤 Data manual:", manualData);
+
+    try {
+      // Import dinamis untuk menghindari circular dependency
+      const { setSystemMode } = await import("./modeControl.js");
+
+      // Kirim ke backend
+      const result = await setSystemMode("manual", manualData);
+      console.log("✅ Berhasil mengirim ke backend:", result);
+
+      // Tutup modal
+      const modal = document.getElementById("manual-modal");
+      if (modal) modal.style.display = "none";
+    } catch (error) {
+      console.error("❌ Gagal mengirim data:", error);
+      alert("Gagal mengirim pengaturan ke AC!");
     }
-    console.log("==========================================");
   });
 
-  // Debug saat modal dibuka
-  const manualBtn = document.getElementById("manual-mode-btn");
-  if (manualBtn) {
-    manualBtn.addEventListener("click", function () {
-      setTimeout(() => {
-        console.log("📱 Manual modal opened");
-        console.log(
-          `🎚️ Current slider values - Front: ${sliderFront.value}, Side: ${sliderSide.value}`
-        );
-      }, 100);
+  // Setup cancel button
+  const cancelButton = document.getElementById("cancel-changes");
+  if (cancelButton) {
+    cancelButton.addEventListener("click", function () {
+      const modal = document.getElementById("manual-modal");
+      if (modal) modal.style.display = "none";
     });
   }
 
-  if (DEBUG) console.log("✅ Slider debugging initialized");
+  // Setup manual/auto mode buttons
+  const manualBtn = document.getElementById("manual-mode-btn");
+  const autoBtn = document.getElementById("auto-mode-btn");
+
+  if (manualBtn) {
+    manualBtn.addEventListener("click", async function () {
+      console.log("📱 Manual mode button clicked");
+
+      // Buka modal
+      const modal = document.getElementById("manual-modal");
+      if (modal) modal.style.display = "block";
+
+      // Import dan set mode ke manual (tanpa data AC)
+      try {
+        const { setSystemMode } = await import("./modeControl.js");
+        await setSystemMode("manual");
+      } catch (error) {
+        console.error("❌ Error setting manual mode:", error);
+      }
+    });
+  }
+
+  if (autoBtn) {
+    autoBtn.addEventListener("click", async function () {
+      console.log("🤖 Auto mode button clicked");
+
+      try {
+        const { setSystemMode } = await import("./modeControl.js");
+        await setSystemMode("auto");
+      } catch (error) {
+        console.error("❌ Error setting auto mode:", error);
+      }
+    });
+  }
+
+  if (DEBUG) console.log("✅ Manual control initialized");
 }
 
 export { initializeDOMElements };
