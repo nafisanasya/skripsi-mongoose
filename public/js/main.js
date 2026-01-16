@@ -19,6 +19,7 @@ import {
   hideSnapshotModal,
   cleanupBoundingBox,
 } from "./boundingBox.js";
+import { setCurrentMode, getCurrentMode } from "./state.js";
 
 let intervalIds = [];
 
@@ -70,9 +71,14 @@ function startPolling() {
   const id1 = setInterval(fetchDataFromBackend, 10000);
   const id2 = setInterval(fetchOccupancyFromBackend, 10000);
   const id3 = setInterval(fetchACStatusFromBackend, 10000);
-  const id4 = setInterval(fetchFuzzyFromBackend, 10000);
 
-  intervalIds.push(id1, id2, id3, id4);
+  // HANYA jalankan fuzzy polling jika mode auto
+  if (getCurrentMode() === "auto") {
+    const id4 = setInterval(fetchFuzzyFromBackend, 10000);
+    intervalIds.push(id4);
+  }
+
+  intervalIds.push(id1, id2, id3);
 }
 
 function stopPolling() {
@@ -99,6 +105,8 @@ async function syncInitialMode() {
 }
 
 function updateModeUI(mode) {
+  // Update global state
+  setCurrentMode(mode);
   const manualBtn = document.getElementById("manual-mode-btn");
   const autoBtn = document.getElementById("auto-mode-btn");
   const modeIndicator = document.getElementById("mode-indicator");

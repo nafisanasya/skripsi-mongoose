@@ -1,8 +1,11 @@
 import { API_BASE } from "./config.js";
+import { setCurrentMode } from "./state.js";
 
 // Fungsi Mengirim Perubahan Mode (POST) - DIPERBAIKI LAGI
 async function setSystemMode(mode, manualData = null) {
   try {
+    // Update global state
+    setCurrentMode(mode);
     console.log(`📡 Sending mode to backend: ${mode}`);
 
     // Debug data yang diterima

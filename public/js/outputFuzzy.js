@@ -1,5 +1,6 @@
 import { API_BASE, DEBUG } from "./config.js";
 import { updateRefreshTime } from "./utils.js";
+import { isManualMode } from "./state.js";
 
 // Fungsi untuk update data fuzzy dari backend
 async function fetchFuzzyFromBackend() {
@@ -41,6 +42,12 @@ async function fetchFuzzyFromBackend() {
 // Fungsi untuk update UI dengan data dari backend
 function updateUIWithFuzzyData(data) {
   if (DEBUG) console.log("📊 Fuzzy Data received in updateUI:", data);
+
+  // JANGAN update UI jika mode manual
+  if (isManualMode()) {
+    if (DEBUG) console.log("⏸️ Manual mode: Skipping fuzzy UI update");
+    return;
+  }
 
   // Update AC Front Output
   if (data.frontData && data.frontData.data) {
