@@ -17,14 +17,28 @@ const modeSchema = new mongoose.Schema({
     acSide: {
       type: String,
       enum: ["ON", "OFF"],
-      // HAPUS default: "OFF"
     },
 
+    // SUHU TERPISAH UNTUK AC DEPAN DAN SAMPING
+    temperatureFront: {
+      type: Number,
+      min: 16,
+      max: 30,
+      default: 25, // Default suhu untuk AC depan
+    },
+    temperatureSide: {
+      type: Number,
+      min: 16,
+      max: 30,
+      default: 25, // Default suhu untuk AC samping
+    },
+
+    // Untuk kompatibilitas dengan ESP32 lama (satu slider)
     temperature: {
       type: Number,
       min: 16,
       max: 30,
-      default: 22, // Default suhu aman kalau user lupa set
+      default: 25,
     },
   },
 

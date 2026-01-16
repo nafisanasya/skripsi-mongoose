@@ -37,22 +37,19 @@ const createMode = async (req, res) => {
   }
 
   try {
-    // --- PERBAIKAN PENTING: Pastikan temperature adalah INTEGER ---
+    // --- PERBAIKAN: Mendukung dua suhu terpisah (depan & samping) ---
     let processedManualState = null;
 
     if (manualState) {
       processedManualState = { ...manualState };
 
-      // 1. Pastikan temperature adalah integer
-      if (processedManualState.temperature !== undefined) {
-        // Konversi ke integer dengan aman
-        const rawTemp = processedManualState.temperature;
-        console.log(
-          `🌡️ Raw temperature received: ${rawTemp} (type: ${typeof rawTemp})`
-        );
+      // Fungsi helper untuk memproses temperature
+      const processTemperature = (temp, defaultValue = 25) => {
+        if (temp === undefined || temp === null) return defaultValue;
 
-        // Konversi dengan berbagai metode untuk memastikan integer
         let tempValue;
+        const rawTemp = temp;
+
         if (typeof rawTemp === "string") {
           tempValue = parseInt(rawTemp);
           console.log(
@@ -62,7 +59,7 @@ const createMode = async (req, res) => {
           tempValue = Math.round(rawTemp);
           console.log(`🔄 Rounding number ${rawTemp} to integer: ${tempValue}`);
         } else {
-          tempValue = 25; // fallback
+          tempValue = defaultValue;
           console.log(
             `⚠️ Unknown temperature type, using default: ${tempValue}`
           );
@@ -70,13 +67,13 @@ const createMode = async (req, res) => {
 
         // Jika konversi gagal, gunakan default
         if (isNaN(tempValue)) {
-          tempValue = 25;
+          tempValue = defaultValue;
           console.log(
             `⚠️ Temperature conversion failed, using default: ${tempValue}`
           );
         }
 
-        // 2. Clamping ke range 16-30
+        // Clamping ke range 16-30
         if (tempValue < 16) {
           console.log(`📉 Temperature ${tempValue} clamped to 16`);
           tempValue = 16;
@@ -86,13 +83,77 @@ const createMode = async (req, res) => {
           tempValue = 30;
         }
 
-        processedManualState.temperature = tempValue;
+        return tempValue;
+      };
+
+      // ========== LOGIKA PEMROSESAN SUHU ==========
+      // Priority 1: Jika ada temperatureFront & temperatureSide (dua slider terpisah)
+      if (
+        processedManualState.temperatureFront !== undefined ||
+        processedManualState.temperatureSide !== undefined
+      ) {
+        // Proses temperatureFront
+        if (processedManualState.temperatureFront !== undefined) {
+          processedManualState.temperatureFront = processTemperature(
+            processedManualState.temperatureFront,
+            25
+          );
+          console.log(
+            `🌡️ Front temperature processed: ${processedManualState.temperatureFront}°C`
+          );
+        }
+
+        // Proses temperatureSide
+        if (processedManualState.temperatureSide !== undefined) {
+          processedManualState.temperatureSide = processTemperature(
+            processedManualState.temperatureSide,
+            25
+          );
+          console.log(
+            `🌡️ Side temperature processed: ${processedManualState.temperatureSide}°C`
+          );
+        }
+
+        // Untuk kompatibilitas dengan ESP32 lama, tetap sertakan field 'temperature'
+        // Default menggunakan temperatureFront jika ada, atau 25 jika tidak
+        processedManualState.temperature =
+          processedManualState.temperatureFront ||
+          processedManualState.temperatureSide ||
+          25;
+
         console.log(
-          `✅ Final temperature: ${processedManualState.temperature}°C`
+          `📊 Temperature (compatibility): ${processedManualState.temperature}°C`
         );
       }
+      // Priority 2: Jika hanya ada temperature (satu slider untuk keduanya)
+      else if (processedManualState.temperature !== undefined) {
+        const tempValue = processTemperature(
+          processedManualState.temperature,
+          25
+        );
+        processedManualState.temperature = tempValue;
 
-      // 3. Pastikan AC status string uppercase
+        // Set temperatureFront dan temperatureSide dengan nilai yang sama
+        processedManualState.temperatureFront = tempValue;
+        processedManualState.temperatureSide = tempValue;
+
+        console.log(`🌡️ Single temperature for both ACs: ${tempValue}°C`);
+        console.log(
+          `📊 Front temperature set to: ${processedManualState.temperatureFront}°C`
+        );
+        console.log(
+          `📊 Side temperature set to: ${processedManualState.temperatureSide}°C`
+        );
+      }
+      // Priority 3: Tidak ada data suhu sama sekali
+      else {
+        processedManualState.temperature = 25;
+        processedManualState.temperatureFront = 25;
+        processedManualState.temperatureSide = 25;
+        console.log(`⚠️ No temperature data found, using defaults: 25°C`);
+      }
+
+      // Pastikan AC status string uppercase
       if (processedManualState.acFront) {
         processedManualState.acFront =
           processedManualState.acFront.toUpperCase();
@@ -130,6 +191,14 @@ const createMode = async (req, res) => {
         manualState: {
           acFront: processedManualState.acFront,
           acSide: processedManualState.acSide,
+          temperatureFront: {
+            value: processedManualState.temperatureFront,
+            type: typeof processedManualState.temperatureFront,
+          },
+          temperatureSide: {
+            value: processedManualState.temperatureSide,
+            type: typeof processedManualState.temperatureSide,
+          },
           temperature: {
             value: processedManualState.temperature,
             type: typeof processedManualState.temperature,
