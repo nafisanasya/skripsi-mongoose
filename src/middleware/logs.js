@@ -26,4 +26,4 @@ const logRequest = (req, res, next) => {
   next();
 };
 
-export default logRequest; // ES Module export
+export default logRequest;

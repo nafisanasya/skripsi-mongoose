@@ -1,8 +1,6 @@
 import { API_BASE, DEBUG } from "./config.js";
 
-// =======================================================
 // CONFIG
-// =======================================================
 const SNAPSHOT_UPDATE_INTERVAL = 5 * 60 * 1000;
 const SNAPSHOT_POLL_INTERVAL = 1000; // 🔹 polling tiap 1 detik
 let snapshotInterval = null;
@@ -10,17 +8,13 @@ let pollingInterval = null;
 
 const SNAPSHOT_BASE_URL = "https://microlabmonitoring.cloud/images/snapshot";
 
-// =======================================================
 // INITIALIZATION
-// =======================================================
 export function initBoundingBox() {
   if (DEBUG) console.log("📸 Bounding Box initialized");
   setupSnapshotButtons();
 }
 
-// =======================================================
 // BUTTON EVENTS
-// =======================================================
 function setupSnapshotButtons() {
   const viewBtn = document.getElementById("view-snapshot-btn");
   const closeBtn = document.getElementById("close-snapshot-btn");
@@ -31,9 +25,7 @@ function setupSnapshotButtons() {
   if (refreshBtn) refreshBtn.addEventListener("click", refreshSnapshotManual);
 }
 
-// =======================================================
 // SHOW SNAPSHOT MODAL
-// =======================================================
 export function showSnapshotModal() {
   const modal = document.getElementById("snapshot-modal");
   if (!modal) return;
@@ -44,9 +36,7 @@ export function showSnapshotModal() {
   modal.style.display = "flex";
 }
 
-// =======================================================
 // HIDE SNAPSHOT MODAL
-// =======================================================
 export function hideSnapshotModal() {
   const modal = document.getElementById("snapshot-modal");
   if (!modal) return;
@@ -56,9 +46,7 @@ export function hideSnapshotModal() {
   stopPollingSnapshot();
 }
 
-// =======================================================
 // MANUAL SNAPSHOT REFRESH (BUFFERING SAMPAI SELESAI)
-// =======================================================
 async function refreshSnapshotManual() {
   if (DEBUG) console.log("🔄 Manual snapshot refresh");
 
@@ -84,9 +72,7 @@ async function refreshSnapshotManual() {
   }
 }
 
-// =======================================================
 // POLLING SNAPSHOT STATUS (INTI SOLUSI)
-// =======================================================
 function startPollingSnapshot() {
   stopPollingSnapshot();
 
@@ -119,9 +105,7 @@ function stopPollingSnapshot() {
   }
 }
 
-// =======================================================
 // LOAD SNAPSHOT IMAGE (NORMAL / AUTO)
-// =======================================================
 async function loadSnapshotImage() {
   try {
     const res = await fetch(`${API_BASE}/snapshot/latest`);
@@ -135,9 +119,7 @@ async function loadSnapshotImage() {
   }
 }
 
-// =======================================================
 // DISPLAY SNAPSHOT RESULT (GAMBAR + ANGKA)
-// =======================================================
 function displaySnapshotResult(data) {
   const imageUrl = `${SNAPSHOT_BASE_URL}/${data.snapshot_file}?t=${Date.now()}`;
   displaySnapshotImage(imageUrl);
@@ -145,9 +127,7 @@ function displaySnapshotResult(data) {
   updateSnapshotCountFromAPI(data.people_count);
 }
 
-// =======================================================
 // DISPLAY SNAPSHOT IMAGE
-// =======================================================
 function displaySnapshotImage(imageUrl) {
   const image = document.getElementById("snapshot-image");
   const placeholder = document.querySelector(".snapshot-placeholder");
@@ -166,9 +146,7 @@ function displaySnapshotImage(imageUrl) {
   image.src = imageUrl;
 }
 
-// =======================================================
 // UPDATE OCCUPANCY COUNT
-// =======================================================
 function updateSnapshotCountFromAPI(value) {
   const snapshotCount = document.getElementById("snapshot-count");
   if (!snapshotCount) return;
@@ -185,9 +163,7 @@ function updateSnapshotCountFromAPI(value) {
   }
 }
 
-// =======================================================
 // TIMESTAMP
-// =======================================================
 function updateSnapshotTimestamp() {
   const el = document.getElementById("snapshot-timestamp");
   if (!el) return;
@@ -199,9 +175,7 @@ function updateSnapshotTimestamp() {
   });
 }
 
-// =======================================================
 // UI STATES
-// =======================================================
 function showLoadingState() {
   const placeholder = document.querySelector(".snapshot-placeholder");
   const image = document.getElementById("snapshot-image");
@@ -228,9 +202,7 @@ function showErrorState(message) {
   placeholder.style.display = "flex";
 }
 
-// =======================================================
 // INTERVAL (AUTO REFRESH)
-// =======================================================
 function startSnapshotInterval() {
   stopSnapshotInterval();
   snapshotInterval = setInterval(loadSnapshotImage, SNAPSHOT_UPDATE_INTERVAL);
@@ -243,9 +215,7 @@ function stopSnapshotInterval() {
   }
 }
 
-// =======================================================
 // CLEANUP
-// =======================================================
 export function cleanupBoundingBox() {
   stopSnapshotInterval();
   stopPollingSnapshot();

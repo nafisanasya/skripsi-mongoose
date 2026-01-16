@@ -3,23 +3,17 @@ import client from "../mqtt/mqttClient.js";
 
 const router = express.Router();
 
-// =======================================================
 // SIMPAN SNAPSHOT TERAKHIR (IN-MEMORY)
-// =======================================================
 let latestSnapshot = {
   snapshot_file: null,
   people_count: 0,
   timestamp: null,
 };
 
-// =======================================================
 // STATUS PROSES SNAPSHOT (BARU)
-// =======================================================
 let snapshotProcessing = false;
 
-// =======================================================
 // MQTT LISTENER (AMBIL DATA DARI RASPBERRY PI)
-// =======================================================
 client.on("message", (topic, message) => {
   if (topic === "microlab/occupancy") {
     try {
@@ -43,9 +37,7 @@ client.on("message", (topic, message) => {
   }
 });
 
-// =======================================================
 // GET SNAPSHOT TERBARU (DIPAKAI FRONTEND)
-// =======================================================
 router.get("/latest", (req, res) => {
   if (!latestSnapshot.snapshot_file) {
     return res.status(404).json({
@@ -59,16 +51,11 @@ router.get("/latest", (req, res) => {
     people_count: latestSnapshot.people_count,
     timestamp: latestSnapshot.timestamp,
 
-    // 🔹 STATUS UNTUK BUFFERING FRONTEND
     processing: snapshotProcessing,
   });
 });
 
-// =======================================================
 // POST SNAPSHOT REFRESH (TRIGGER RASPBERRY PI)
-// =======================================================
-
-// 🔒 debounce sederhana (5 detik)
 let lastRefreshTime = 0;
 
 router.post("/refresh", (req, res) => {
@@ -85,7 +72,7 @@ router.post("/refresh", (req, res) => {
 
   lastRefreshTime = now;
 
-  // 🔹 SET STATUS: SEDANG DIPROSES
+  // SET STATUS: SEDANG DIPROSES
   snapshotProcessing = true;
 
   const topic = "microlab/snapshot/refresh";
@@ -110,7 +97,7 @@ router.post("/refresh", (req, res) => {
 
     console.log(`📡 Snapshot refresh terkirim ke ${topic}`);
 
-    // ⏳ FRONTEND TETAP BUFFERING SAMPAI processing = false
+    // FRONTEND TETAP BUFFERING SAMPAI processing = false
     res.json({
       success: true,
       message: "Snapshot refresh diproses",

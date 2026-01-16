@@ -12,7 +12,6 @@ import { fetchDataFromBackend } from "./dht22.js";
 import { fetchOccupancyFromBackend, setDefaultOccupancy } from "./occupancy.js";
 import { fetchACStatusFromBackend, setDefaultACStatus } from "./acStatus.js";
 import { fetchFuzzyFromBackend } from "./outputFuzzy.js";
-// ✅ UPDATE: Import getSystemMode juga untuk sinkronisasi awal
 import { setSystemMode, getSystemMode } from "./modeControl.js";
 import {
   initBoundingBox,
@@ -21,7 +20,6 @@ import {
   cleanupBoundingBox,
 } from "./boundingBox.js";
 
-// ✅ TAMBAHAN: Variabel untuk menyimpan ID Interval (Agar bisa distop)
 let intervalIds = [];
 
 // Initialize ketika DOM sudah dimuat
@@ -42,14 +40,13 @@ document.addEventListener("DOMContentLoaded", async function () {
   setupModal();
   initBoundingBox();
 
-  // ✅ TAMBAHAN: Cek Mode Terakhir dari Database saat awal load
-  // Supaya tombol sinkron (Auto/Manual) dengan settingan server
+  // TAMBAHAN: Cek Mode Terakhir dari Database saat awal load
   await syncInitialMode();
 
   // Fetch data dari backend pertama kali
   fetchAllData();
 
-  // ✅ PERBAIKAN: Gunakan fungsi startPolling untuk memulai interval data
+  // PERBAIKAN: Gunakan fungsi startPolling untuk memulai interval data
   startPolling();
 
   // Update refresh time every 10 seconds (Jam tetap jalan terus)
@@ -58,7 +55,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   console.log("✅ Application initialization complete!");
 });
 
-// ✅ FUNGSI BARU: Helper Fetch Semua Data
 function fetchAllData() {
   fetchDataFromBackend();
   fetchOccupancyFromBackend();
@@ -66,7 +62,6 @@ function fetchAllData() {
   fetchFuzzyFromBackend();
 }
 
-// ✅ FUNGSI BARU: Mulai Update Otomatis
 function startPolling() {
   // Cek agar tidak double interval
   if (intervalIds.length > 0) return;
@@ -80,7 +75,6 @@ function startPolling() {
   intervalIds.push(id1, id2, id3, id4);
 }
 
-// ✅ FUNGSI BARU: Stop Update Otomatis (Pause saat edit modal)
 function stopPolling() {
   console.log("⏸️ Pausing Auto-Refresh (User Editing)...");
   intervalIds.forEach((id) => clearInterval(id));
@@ -92,7 +86,6 @@ let modal, closeBtn, cancelBtn, applyBtn;
 let acFrontSwitch, acFrontStatus, acFrontTemperature, acFrontTemperatureValue;
 let acSideSwitch, acSideStatus, acSideTemperature, acSideTemperatureValue;
 
-// ✅ FUNGSI BARU: Sinkronisasi Mode Awal
 async function syncInitialMode() {
   try {
     const currentStatus = await getSystemMode();
@@ -105,7 +98,6 @@ async function syncInitialMode() {
   }
 }
 
-// ✅ FUNGSI BARU: Helper Update UI Tombol (Supaya tidak duplikat kode)
 function updateModeUI(mode) {
   const manualBtn = document.getElementById("manual-mode-btn");
   const autoBtn = document.getElementById("auto-mode-btn");
@@ -259,7 +251,6 @@ function setupModal() {
 
 // Fungsi menampilkan modal
 function showManualModal() {
-  // ✅ PERBAIKAN: Stop polling saat modal dibuka agar switch tidak reset sendiri
   stopPolling();
 
   const modal = document.getElementById("manual-modal");
@@ -301,17 +292,14 @@ function hideManualModal() {
   const modal = document.getElementById("manual-modal");
   if (modal) modal.style.display = "none";
 
-  // ✅ PERBAIKAN: Lanjut polling saat modal ditutup
   startPolling();
 }
 
-// ==========================================================
-// FUNGSI UTAMA: APPLY CHANGES (Kirim ke Backend)
-// ==========================================================
+// APPLY CHANGES (Kirim ke Backend)
 async function applyManualChanges() {
   console.log("✅ Apply changes clicked");
 
-  // 1. Ambil Nilai Suhu (Validasi agar tidak NaN)
+  // Ambil Nilai Suhu (Validasi agar tidak NaN)
   let tempValue = 22; // Default jika gagal baca
   if (acFrontTemperature && acFrontTemperature.value) {
     const parsedVal = parseInt(acFrontTemperature.value);
@@ -320,7 +308,7 @@ async function applyManualChanges() {
     }
   }
 
-  // 2. Siapkan Payload (Switch + Temperature)
+  // Siapkan Payload (Switch + Temperature)
   const manualStatePayload = {
     acFront: acFrontSwitch.checked ? "ON" : "OFF",
     acSide: acSideSwitch.checked ? "ON" : "OFF",
@@ -338,7 +326,7 @@ async function applyManualChanges() {
 
     console.log("✅ Manual config applied successfully");
 
-    // 3. Update Tampilan Dashboard (Biar sinkron dengan modal)
+    // Update Tampilan Dashboard (Biar sinkron dengan modal)
     // Update manual agar instant feedback sebelum polling jalan lagi
     const acFrontElement = document.getElementById("ac-front");
     if (acFrontElement) {
@@ -385,7 +373,7 @@ async function applyManualChanges() {
   }
 }
 
-// Helper: Fetch API
+// Fetch API
 async function sendACCommand(data) {
   const API_URL = "http://localhost:5000/api/ac-status/control";
 

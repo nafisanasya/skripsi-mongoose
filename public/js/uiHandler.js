@@ -53,6 +53,82 @@ function initializeDOMElements() {
       console.log(`✅ Element found: ${id}`);
     }
   });
+
+  // --- TAMBAHAN UNTUK DEBUGGING SLIDER MASALAH ---
+  addSliderDebugging();
+}
+
+// Fungsi baru untuk debugging slider
+function addSliderDebugging() {
+  // Cari slider temperature
+  const sliderFront = document.getElementById("ac-front-temperature");
+  const sliderSide = document.getElementById("ac-side-temperature");
+  const applyButton = document.getElementById("apply-changes");
+
+  if (!sliderFront || !sliderSide || !applyButton) {
+    if (DEBUG)
+      console.error("❌ Debug: Slider atau Apply button tidak ditemukan");
+    return;
+  }
+
+  // Debug ketika slider berubah
+  sliderFront.addEventListener("input", function () {
+    console.log(
+      `🎚️ Front slider changed: ${this.value} (type: ${typeof this.value})`
+    );
+    console.log(`📊 Front slider parsed: ${parseInt(this.value)}`);
+  });
+
+  sliderSide.addEventListener("input", function () {
+    console.log(
+      `🎚️ Side slider changed: ${this.value} (type: ${typeof this.value})`
+    );
+    console.log(`📊 Side slider parsed: ${parseInt(this.value)}`);
+  });
+
+  // Debug ketika tombol Apply diklik
+  applyButton.addEventListener("click", function () {
+    const sliderValueFront = sliderFront.value;
+    const sliderValueSide = sliderSide.value;
+
+    console.log("🔴 ======== APPLY BUTTON CLICKED ========");
+    console.log(
+      `🎚️ Front slider value: ${sliderValueFront} (type: ${typeof sliderValueFront})`
+    );
+    console.log(
+      `🎚️ Side slider value: ${sliderValueSide} (type: ${typeof sliderValueSide})`
+    );
+
+    // Cek toggle status
+    const toggleFront = document.getElementById("ac-front-switch");
+    const toggleSide = document.getElementById("ac-side-switch");
+
+    if (toggleFront) {
+      const frontStatus = toggleFront.checked ? "ON" : "OFF";
+      console.log(`🔌 AC Front toggle: ${frontStatus}`);
+    }
+
+    if (toggleSide) {
+      const sideStatus = toggleSide.checked ? "ON" : "OFF";
+      console.log(`🔌 AC Side toggle: ${sideStatus}`);
+    }
+    console.log("==========================================");
+  });
+
+  // Debug saat modal dibuka
+  const manualBtn = document.getElementById("manual-mode-btn");
+  if (manualBtn) {
+    manualBtn.addEventListener("click", function () {
+      setTimeout(() => {
+        console.log("📱 Manual modal opened");
+        console.log(
+          `🎚️ Current slider values - Front: ${sliderFront.value}, Side: ${sliderSide.value}`
+        );
+      }, 100);
+    });
+  }
+
+  if (DEBUG) console.log("✅ Slider debugging initialized");
 }
 
 export { initializeDOMElements };

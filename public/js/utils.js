@@ -81,7 +81,7 @@ function updateRoomStatus() {
   const statusText = roomStatusIndicator.querySelector("h4");
   const statusDetail = roomStatusIndicator.querySelector("p");
 
-  // KONDISI 1: Ada Orang = Room Used
+  // Ada Orang = Room Used
   if (currentOccupancy > 0) {
     roomStatusIndicator.className = "room-status-indicator status-used";
     statusIcon.className = "fas fa-door-open";
@@ -91,7 +91,7 @@ function updateRoomStatus() {
     if (DEBUG)
       console.log("🟢 Room Used (Occupancy detected):", currentOccupancy);
   }
-  // KONDISI 2: Ruangan Kosong = Room Not Used
+  // Ruangan Kosong = Room Not Used
   else {
     roomStatusIndicator.className = "room-status-indicator status-unused";
     statusIcon.className = "fas fa-door-closed";

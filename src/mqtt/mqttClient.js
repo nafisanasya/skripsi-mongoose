@@ -15,7 +15,7 @@ const options = {
 
 const client = mqtt.connect(MQTT_BROKER, options);
 
-// Status AC (Tanpa Database)
+// Status AC 
 const acStatus = {
   front: "OFF",
   side: "OFF",
@@ -46,9 +46,6 @@ client.on("connect", () => {
   // Subscribe output fuzzy (Setpoint AC)
   client.subscribe("microlab/fuzzy/front", { qos: 1 });
   client.subscribe("microlab/fuzzy/side", { qos: 1 });
-
-  // Subscribe Snapshot Refresh Manual
-  // client.subscribe("microlab/snapshot/refresh", { qos: 1 });
 
   console.log("📡 Subscribed to MQTT topics");
 });
@@ -86,7 +83,7 @@ client.on("message", async (topic, message) => {
       console.log("👤 Occupancy saved:", data.people_count);
     }
 
-    // ACS712 (Tanpa Database)
+    // ACS712 
     if (topic === "microlab/ac-status/front") {
       acStatus.front = data.ac_front;
       console.log("⚡ AC FRONT:", acStatus.front);

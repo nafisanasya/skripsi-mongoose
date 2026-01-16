@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-// (Opsional) Simpan data occupancy via HTTP
+// Input manual
 router.post("/", createOccupancy);
 
 // Ambil semua data occupancy
